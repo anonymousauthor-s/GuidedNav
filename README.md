@@ -1,8 +1,5 @@
 # GuidedNav
 
-> **Upload in progress.** Model and data download links will become active after all files pass the public-download checks.
-
-
 ### Shaping Vision-Language Navigation Representations through Pre-Action Attention and Spatial Guidance
 
 **Anonymous release for peer review**
@@ -37,7 +34,7 @@ and run your RGB sequence using the [inference guide](https://anonymousauthor-s.
 
 ## Model downloads
 
-All model assets are being uploaded to the [public release](https://github.com/anonymousauthor-s/GuidedNav/releases/tag/stage3-epoch1).
+All model assets are available in the [public release](https://github.com/anonymousauthor-s/GuidedNav/releases/).
 
 | Model directory | Contents |
 | --- | --- |
@@ -92,4 +89,4 @@ Release checks cover model hashes, CPU imports/CLI, data alignment and recovered
 training inputs. Full GPU retraining, complete benchmark evaluation and
 full-dataset RGB rendering were not rerun during packaging. The [guides](https://anonymousauthor-s.github.io/GuidedNav/guide/inference/)
 describe these limits. Upstream copyright and license notices are retained;
-model/data terms are included with the [release assets](https://github.com/anonymousauthor-s/GuidedNav/releases/tag/stage3-epoch1).
+model/data terms are included with the [release assets](https://github.com/anonymousauthor-s/GuidedNav/releases/).

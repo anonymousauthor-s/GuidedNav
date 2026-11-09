@@ -8,7 +8,7 @@
 </li>
 </ul>
 </div>
-</aside><main class="paper"><p role="status" style="padding:14px;background:#fff5d8;border-radius:8px"><strong>Upload in progress.</strong> Model and data download links will become active after all files pass the public-download checks.</p><div class="eyebrow">Anonymous research release · Stage 3</div><h1 id="environments">Environments</h1>
+</aside><main class="paper"><div class="eyebrow">Anonymous research release · Stage 3</div><h1 id="environments">Environments</h1>
 <p>Training and Habitat use separate runtimes. The original training image did not contain Habitat. Do not force old Habitat simulator dependencies into the training image.</p>
 <h2 id="final-stage-training">Final-stage training</h2>
 <p><code>config/training_environment.json</code> records package versions read from the exact image used by the selected final-stage run. The important versions are Python 3.12.3, Torch 2.10.0a0+b558c986e8.nv25.11, TorchVision 0.25.0a0+7a13ad0f, Transformers 4.57.6, PEFT 0.19.1, Accelerate 1.14.0, DeepSpeed 0.16.5 and FlashAttention 2.7.4.post1+25.11. This is a development Torch build, so a normal <code>pip install torch==2.10.0</code> does not recreate it.</p>

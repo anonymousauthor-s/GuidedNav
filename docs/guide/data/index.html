@@ -11,9 +11,9 @@
 </li>
 </ul>
 </div>
-</aside><main class="paper"><p role="status" style="padding:14px;background:#fff5d8;border-radius:8px"><strong>Upload in progress.</strong> Model and data download links will become active after all files pass the public-download checks.</p><div class="eyebrow">Anonymous research release · Stage 3</div><h1 id="data-and-teacher-preparation">Data and teacher preparation</h1>
+</aside><main class="paper"><div class="eyebrow">Anonymous research release · Stage 3</div><h1 id="data-and-teacher-preparation">Data and teacher preparation</h1>
 <p>The complete selected Stage 3 annotation, trajectory and prompt-metadata add-on
-is being uploaded to the <a href="https://github.com/anonymousauthor-s/GuidedNav/releases/tag/stage3-epoch1">public release</a>. From <code>code/</code>, download it with:</p>
+is available from the <a href="https://github.com/anonymousauthor-s/GuidedNav/releases/">public release</a>. From <code>code/</code>, download it with:</p>
 <pre><code class="language-bash">python tools/download_assets.py --group data
 </code></pre>
 <p>It installs <code>annotations/</code>, <code>data/r2r/traj/</code>, <code>data/rxr/traj/</code>,
@@ -22,7 +22,7 @@ Combine these files with official benchmark instructions and licensed
 Matterport3D scenes to reconstruct the training inputs. The package supplies
 exact collected poses/actions, aligned labels/masks, frozen selection arrays and
 per-row prompt choices. RGB is rendered locally. See the <a href="https://anonymousauthor-s.github.io/GuidedNav/guide/models/">model guide</a>
-for the full weights and <a href="https://github.com/anonymousauthor-s/GuidedNav/releases/tag/stage3-epoch1">data terms</a> for attribution and upstream conditions.</p>
+for the full weights and <a href="https://github.com/anonymousauthor-s/GuidedNav/releases/">data terms</a> for attribution and upstream conditions.</p>
 <p>The stage-3 epoch uses 157,465 R2R rows and 472,323 English RxR rows: 629,788 selected observations from 18,656 collected trajectories. This is the exact training selection, rather than the total size of Guided-R2R/Guided-RxR. The model directories are <code>navigation-base</code>, <code>stage3-initialization</code> and <code>stage3-epoch1</code>; see README.md for training and inference.</p>
 <h2 id="1-obtain-official-benchmark-assets">1. Obtain official benchmark assets</h2>
 <p>Follow the <a href="https://github.com/jacobkrantz/VLN-CE#data">VLN-CE data setup</a> for R2R episodes and MP3D scene preparation, the <a href="https://github.com/jacobkrantz/VLN-CE#episodes-room-across-room-rxr">official RxR-Habitat data instructions in VLN-CE</a> for RxR guide episodes and ground-truth trajectories, and the <a href="https://niessner.github.io/Matterport/">Matterport3D access instructions</a> for scene assets. Download through the upstream access process; this release does not replace those permissions.</p>

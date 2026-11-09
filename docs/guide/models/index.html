@@ -9,9 +9,9 @@
 </li>
 </ul>
 </div>
-</aside><main class="paper"><p role="status" style="padding:14px;background:#fff5d8;border-radius:8px"><strong>Upload in progress.</strong> Model and data download links will become active after all files pass the public-download checks.</p><div class="eyebrow">Anonymous research release · Stage 3</div><h1 id="model-downloads">Model downloads</h1>
-<p>The full navigation model and both Stage 3 adapters are being uploaded to the
-<a href="https://github.com/anonymousauthor-s/GuidedNav/releases/tag/stage3-epoch1">public release</a>. No account or access token is required.</p>
+</aside><main class="paper"><div class="eyebrow">Anonymous research release · Stage 3</div><h1 id="model-downloads">Model downloads</h1>
+<p>The full navigation model and both Stage 3 adapters are available in the
+<a href="https://github.com/anonymousauthor-s/GuidedNav/releases/">public release</a>. No account or access token is required.</p>
 <h2 id="download-and-install">Download and install</h2>
 <p>Clone the code, then run the standard-library downloader with Python 3.9 or later:</p>
 <pre><code class="language-bash">git clone https://github.com/anonymousauthor-s/GuidedNav.git
@@ -65,7 +65,7 @@ is needed only for training and is downloaded separately in the <a href="../data
 </code></pre>
 <p>This installs the <strong>complete frozen Stage 3 selection</strong>: 629,788 annotated rows,
 379,428 masks, 18,656 collected trajectories/actions and exact prompt-choice
-metadata. It is a roughly <strong>459 MiB</strong> compressed add-on, rather than the full
+metadata. It is a roughly <strong>457 MiB</strong> compressed add-on, rather than the full
 Guided-R2R/Guided-RxR annotation corpus. Original instructions and licensed scenes
 are obtained from upstream. Follow the <a href="../data/">data guide</a> to reconstruct text,
 render RGB and prepare training records. Allow additional disk space for the
@@ -74,7 +74,7 @@ extracted labels and rendered observations.</p>
 <pre><code class="language-bash">python tools/download_assets.py --group all
 </code></pre>
 <h2 id="manual-downloads-and-integrity">Manual downloads and integrity</h2>
-<p>The <a href="https://github.com/anonymousauthor-s/GuidedNav/releases/tag/stage3-epoch1">release assets</a> include the model-support archive, data add-on,
+<p>The <a href="https://github.com/anonymousauthor-s/GuidedNav/releases/">release assets</a> include the model-support archive, data add-on,
 18 transport parts for the four original backbone tensor files, a download
 manifest, and SHA256SUMS. Use the downloader for automatic ordered reassembly.
 The assembled tensor files are byte-identical to the exported navigation model.</p>

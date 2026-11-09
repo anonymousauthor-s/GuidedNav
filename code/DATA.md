@@ -1,10 +1,7 @@
 # Data and teacher preparation
 
-> **Upload in progress.** Model and data download links will become active after all files pass the public-download checks.
-
-
 The complete selected Stage 3 annotation, trajectory and prompt-metadata add-on
-is being uploaded to the [public release](https://github.com/anonymousauthor-s/GuidedNav/releases/tag/stage3-epoch1). From `code/`, download it with:
+is available from the [public release](https://github.com/anonymousauthor-s/GuidedNav/releases/). From `code/`, download it with:
 
 ```bash
 python tools/download_assets.py --group data
@@ -16,7 +13,7 @@ Combine these files with official benchmark instructions and licensed
 Matterport3D scenes to reconstruct the training inputs. The package supplies
 exact collected poses/actions, aligned labels/masks, frozen selection arrays and
 per-row prompt choices. RGB is rendered locally. See the [model guide](https://anonymousauthor-s.github.io/GuidedNav/guide/models/)
-for the full weights and [data terms](https://github.com/anonymousauthor-s/GuidedNav/releases/tag/stage3-epoch1) for attribution and upstream conditions.
+for the full weights and [data terms](https://github.com/anonymousauthor-s/GuidedNav/releases/) for attribution and upstream conditions.
 
 The stage-3 epoch uses 157,465 R2R rows and 472,323 English RxR rows: 629,788 selected observations from 18,656 collected trajectories. This is the exact training selection, rather than the total size of Guided-R2R/Guided-RxR. The model directories are `navigation-base`, `stage3-initialization` and `stage3-epoch1`; see README.md for training and inference.
 

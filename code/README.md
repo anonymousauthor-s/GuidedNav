@@ -1,15 +1,12 @@
 # GuidedNav · Code
 
-> **Upload in progress.** Model and data download links will become active after all files pass the public-download checks.
-
-
 [Project page](https://anonymousauthor-s.github.io/GuidedNav/) · [Inference](#inference) · [Training](#stage-3-training) · [Data](#training-data) · [Models](#models-and-directory-layout) · [Evaluation](#habitat-evaluation)
 
 This directory contains frame-policy inference, R2R-CE/RxR-CE evaluation, and **Stage 3 guidance fine-tuning for one epoch**. It starts from navigation-pretrained weights and a supplied Stage 3 initialization. Reconstructing the earlier training stages is outside this package's scope.
 
 ## Models and directory layout
 
-The complete model bundle and selected Stage 3 data add-on are being uploaded to the [public release](https://github.com/anonymousauthor-s/GuidedNav/releases/tag/stage3-epoch1). See the [download guide](https://anonymousauthor-s.github.io/GuidedNav/guide/models/) or run from `code/`:
+The complete model bundle and selected Stage 3 data add-on are available in the [public release](https://github.com/anonymousauthor-s/GuidedNav/releases/). See the [download guide](https://anonymousauthor-s.github.io/GuidedNav/guide/models/) or run from `code/`:
 
 ```bash
 python tools/download_assets.py --group inference

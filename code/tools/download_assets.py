@@ -7,7 +7,6 @@ Interrupted downloads resume; rerunning verifies and reuses completed files.
 import argparse
 import hashlib
 import json
-import os
 from pathlib import Path, PurePosixPath
 import shutil
 import tarfile
@@ -133,6 +132,8 @@ def extract(archive, root, allowed):
             else:
                 temporary.replace(target)
             count += 1
+            if count % 25000 == 0:
+                print('  Installed {:,} files...'.format(count), flush=True)
     print('Installed {} verified files from {}'.format(count, archive.name), flush=True)
 
 

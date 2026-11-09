@@ -2,8 +2,8 @@
   "verified_on": "2026-11-09",
   "scope": "Anonymous Stage 3 epoch-1 code package; validation does not assert an end-to-end GPU rerun.",
   "static": {
-    "python_files_parsed": 87,
-    "json_files_parsed": 6,
+    "python_files_parsed": 88,
+    "json_files_parsed": 7,
     "bash_scripts_syntax_checked": 2,
     "private_identifiers_scan_passed": true,
     "reference_inference_methods_ast_identical": [
@@ -152,5 +152,45 @@
     "collected_pose_hashes_verified": true,
     "rgb_pixels_rerendered": false,
     "scope": "Final Stage 3 selection; full Guided annotation corpus remains outside this check."
+  },
+  "archive_privacy": {
+    "anonymous_archive_headers": true,
+    "files": 398110,
+    "safetensors_metadata": "Only format=pt in all four base shards and both adapters"
+  },
+  "asset_release": {
+    "download_tool": {
+      "passed": true,
+      "download_checks": [
+        "HTTP range resume",
+        "SHA256 for each asset and reassembled tensor",
+        "repeat-run integrity and reuse",
+        "partial cleanup",
+        "archive extraction",
+        "corruption rejection",
+        "path traversal rejection",
+        "existing changed file preservation"
+      ],
+      "static_html_files": 6,
+      "local_links_and_fragments": 105
+    },
+    "model_support_and_masks": {
+      "passed": true,
+      "mask_count": 379428,
+      "all_mask_hashes_verified": true,
+      "support_archive_files": 43,
+      "model_payload_hashes_verified": true,
+      "model_metadata_identity_scan": true
+    },
+    "data_archive": {
+      "passed": true,
+      "all_mask_hashes_verified": 379428,
+      "safe_archive_paths": 398110,
+      "data_sha256": "e100778f32199d0b07ae5fa804033d3f5cb1c6d675d8b159444bd76fb8374130",
+      "bytes": 479510307
+    },
+    "trajectories_array_equal_to_training_source": 18656,
+    "base_tensor_files_byte_identical": 4,
+    "all_uploaded_assets_server_sha256_verified": true
   }
 }

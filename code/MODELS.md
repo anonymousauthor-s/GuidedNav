@@ -1,10 +1,7 @@
 # Model downloads
 
-> **Upload in progress.** Model and data download links will become active after all files pass the public-download checks.
-
-
-The full navigation model and both Stage 3 adapters are being uploaded to the
-[public release](https://github.com/anonymousauthor-s/GuidedNav/releases/tag/stage3-epoch1). No account or access token is required.
+The full navigation model and both Stage 3 adapters are available in the
+[public release](https://github.com/anonymousauthor-s/GuidedNav/releases/). No account or access token is required.
 
 ## Download and install
 
@@ -41,7 +38,7 @@ Archive compression and transport splitting can make download sizes differ.
 
 Use the supplied navigation-pretrained backbone with its matching adapter.
 An unmodified Qwen3-VL model cannot replace that backbone. The frozen VGGT teacher
-is needed only for training and is downloaded separately in the [data guide](../data/).
+is needed only for training and is downloaded separately in the [data guide](https://anonymousauthor-s.github.io/GuidedNav/guide/data/).
 
 ## Training data
 
@@ -51,9 +48,9 @@ python tools/download_assets.py --group data
 
 This installs the **complete frozen Stage 3 selection**: 629,788 annotated rows,
 379,428 masks, 18,656 collected trajectories/actions and exact prompt-choice
-metadata. It is a roughly **459 MiB** compressed add-on, rather than the full
+metadata. It is a roughly **457 MiB** compressed add-on, rather than the full
 Guided-R2R/Guided-RxR annotation corpus. Original instructions and licensed scenes
-are obtained from upstream. Follow the [data guide](../data/) to reconstruct text,
+are obtained from upstream. Follow the [data guide](https://anonymousauthor-s.github.io/GuidedNav/guide/data/) to reconstruct text,
 render RGB and prepare training records. Allow additional disk space for the
 extracted labels and rendered observations.
 
@@ -65,7 +62,7 @@ python tools/download_assets.py --group all
 
 ## Manual downloads and integrity
 
-The [release assets](https://github.com/anonymousauthor-s/GuidedNav/releases/tag/stage3-epoch1) include the model-support archive, data add-on,
+The [release assets](https://github.com/anonymousauthor-s/GuidedNav/releases/) include the model-support archive, data add-on,
 18 transport parts for the four original backbone tensor files, a download
 manifest, and SHA256SUMS. Use the downloader for automatic ordered reassembly.
 The assembled tensor files are byte-identical to the exported navigation model.
@@ -81,4 +78,4 @@ research, subject to the listed upstream terms. Original Qwen Apache-2.0 rights
 and original benchmark rights remain unchanged. Matterport3D scenes must be
 obtained through the official access process.
 
-Continue with [inference](../inference/) or [Stage 3 training](../training/).
+Continue with [inference](https://anonymousauthor-s.github.io/GuidedNav/guide/inference/) or [Stage 3 training](https://anonymousauthor-s.github.io/GuidedNav/guide/training/).
