@@ -1,5 +1,5 @@
 {
-  "base-19450": {
+  "navigation-base": {
     "model-00001-of-00004.safetensors": {
       "sha256": "16743895a9ac382fe5c912cd582305f328bbf8aedebea1a25ce623f30b8e08ea",
       "bytes": 4998056552
@@ -17,7 +17,7 @@
       "bytes": 2704357976
     }
   },
-  "final-2461": {
+  "stage3-epoch1": {
     "adapter_model.safetensors": {
       "sha256": "eea417c471dc6d68992f02f2721c973de0debc60ccb7e149a18335d237867e82",
       "bytes": 210083584
@@ -27,7 +27,7 @@
       "bytes": 50352181
     }
   },
-  "initialization-6656": {
+  "stage3-initialization": {
     "adapter_model.safetensors": {
       "sha256": "29bb4cee847fed1993d8b4ae0439441cee5c0563502fc0cb2637437d9726acc6",
       "bytes": 210083584

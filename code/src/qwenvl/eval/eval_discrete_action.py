@@ -22,13 +22,14 @@ from qwenvl.data.vln_unified_dataset import _build_vln_messages, DEFAULT_IMAGE_T
 from qwenvl.data.vln_sampling import history_indices
 from qwenvl.temporal_token_merge import TemporalMergeConfig, TemporalResidualGate, parse_temporal_decay, register_temporal_merge_hook
 from qwenvl.eval.eval_common import get_rank, get_world_size, get_local_rank, init_distributed, resolve_sim_gpu, RemoteEnv
-from qwenvl.inference import load_final_model
+from qwenvl.inference import load_final_model, validate_temporal_gate
 
 def build_model_and_processor(model_path, min_pixels, max_pixels, device, dtype=torch.bfloat16):
     base_path = os.environ.get('GUIDEDNAV_BASE')
     if not base_path:
-        raise ValueError('Set GUIDEDNAV_BASE to the exact released base-19450 directory')
-    return load_final_model(model_path, base_path, device, min_pixels, max_pixels, 'flash_attention_2')
+        raise ValueError('Set GUIDEDNAV_BASE to the exact released navigation-base directory')
+    return load_final_model(model_path, base_path, device, min_pixels, max_pixels, 'flash_attention_2',
+                            weights_source=os.environ.get('GUIDEDNAV_WEIGHTS_SOURCE', 'released'))
 
 class VLNEvaluator:
     NAV_PROMPT = (
@@ -645,6 +646,7 @@ def eval():
             raise KeyError(f"temporal_residual_gate is missing from {state_path}")
         gate.load_state_dict(state["temporal_residual_gate"], strict=True)
         gate.to(device=device, dtype=torch.float32).eval()
+        validate_temporal_gate(gate)
         args.temporal_residual_gate = gate
         print(f"[eval] restored temporal residual gate={gate().item():.6f}")
     evaluate(model, processor, tokenizer, args)

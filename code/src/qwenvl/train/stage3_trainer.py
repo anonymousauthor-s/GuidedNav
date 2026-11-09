@@ -1,4 +1,4 @@
-"""Keep the E6 model; supervise only current SF tokens and add native S/O."""
+"""Keep the GuidedNav model; supervise only current SF tokens and add native S/O."""
 import math
 import torch
 import torch.distributed as dist
@@ -6,7 +6,7 @@ from qwenvl.train.train_discrete_action_temporal_spatial import TemporalSpatialT
 from qwenvl.train.native_attention import NativeAttention
 
 
-class FullE6Trainer(TemporalSpatialTrainer):
+class Stage3Trainer(TemporalSpatialTrainer):
     def __init__(self,*args,**kwargs):
         super().__init__(*args,**kwargs)
         self.native = NativeAttention(self.model,layer=27,heads=(0,16))
@@ -14,7 +14,7 @@ class FullE6Trainer(TemporalSpatialTrainer):
 
     def log(self,logs,*args,**kwargs):
         if 'grad_norm' in logs and not math.isfinite(float(logs['grad_norm'])):
-            raise FloatingPointError('Full E6 training produced a nonfinite gradient norm')
+            raise FloatingPointError('Stage 3 training produced a nonfinite gradient norm')
         return super().log(logs,*args,**kwargs)
 
     def get_batch_samples(self,epoch_iterator,num_batches,device):
@@ -32,7 +32,7 @@ class FullE6Trainer(TemporalSpatialTrainer):
 
     def _alignment_loss(self,model,projector_name,student_parts,target_grids,teacher,vggt_hw):
         if projector_name != 'sf8_sf_projector':
-            raise ValueError('Full recipe only permits the original E6 joint-context SF branch')
+            raise ValueError('Full recipe only permits the joint-context spatial guidance branch')
         # Teacher already processed the original history+current sequence. Slice
         # only its output; historical student tokens never enter this SF loss.
         return super()._alignment_loss(model,projector_name,student_parts[-1:],
@@ -84,6 +84,6 @@ class FullE6Trainer(TemporalSpatialTrainer):
         if counts is not None:
             loss = loss*(self.args.world_size*microbatches)/counts[0].clamp_min(1)
         if not torch.isfinite(loss):
-            raise FloatingPointError('Full E6 training produced a nonfinite loss')
+            raise FloatingPointError('Stage 3 training produced a nonfinite loss')
         self._metric_sums['aux_warmup'] = self._metric_sums.get('aux_warmup',0.)+warmup
         return (loss,outputs) if return_outputs else loss

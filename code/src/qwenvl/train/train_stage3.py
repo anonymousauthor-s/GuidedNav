@@ -1,4 +1,4 @@
-"""Full R2R+RxR E6/current-SF/S/O training, with resumable quarter-epoch stops."""
+"""Stage 3 training with spatial, subtask and landmark guidance."""
 from dataclasses import dataclass, asdict
 import hashlib
 import json
@@ -16,7 +16,7 @@ from qwenvl.train.train_discrete_action_temporal_spatial import TemporalSpatialA
 from qwenvl.train.train_discrete_action_vggt_patch import AlignProjector, _hidden_size
 from qwenvl.temporal_token_merge import TemporalResidualGate
 from qwenvl.data.full_vln_dataset import load_full_dataset, FullVLNCollator
-from qwenvl.train.full_e6_trainer import FullE6Trainer
+from qwenvl.train.stage3_trainer import Stage3Trainer
 
 
 @dataclass
@@ -81,7 +81,7 @@ class SmokeGradientAudit(TrainerCallback):
             handle.remove()
 
 
-class CheckpointedFullTrainer(FullE6Trainer):
+class CheckpointedFullTrainer(Stage3Trainer):
     def __init__(self,*args,full_processor,full_recipe,**kwargs):
         super().__init__(*args,**kwargs)
         self.full_processor,self.full_recipe = full_processor,full_recipe
@@ -99,20 +99,20 @@ def main():
     model_args,data_args,spatial,args,run = parser.parse_args_into_dataclasses()
     from qwenvl.model_identity import verify_model_identity
     verify_model_identity(os.environ.get('CONTINUE_BASE',model_args.model_name_or_path),
-                          run.full_init, 'initialization-6656')
+                          run.full_init, 'stage3-initialization')
     if not run.full_init:
-        raise ValueError('Explicit LoRA continuation checkpoint required')
+        raise ValueError('Stage 3 initialization weights are required')
     if not run.full_manifest:
         raise ValueError('A validated full mixed-source manifest is required')
     if args.per_device_train_batch_size != 1 or not args.lora_enable:
         raise ValueError('Recipe requires LoRA and per-device batch 1')
     if (spatial.current_spatial_weight,spatial.past_spatial_weight,spatial.sf8_spatial_weight,spatial.delta_spatial_weight) != (0.,0.,.5,.1):
-        raise ValueError('Use E6 SF8=.5/current-only loss and Delta=.1; standalone current/past SF must be disabled')
+        raise ValueError('Use long-horizon weight .5/current-only loss and local weight .1; standalone current/past SF must be disabled')
     if spatial.current_fusion_mode != 'gated_residual' or spatial.current_matching_mode != 'mutual':
-        raise ValueError('Full model must retain E6 mutual gated residual')
+        raise ValueError('Stage 3 requires mutual matching and gated residual fusion')
     if not run.full_smoke:
         if args.world_size != 32 or args.gradient_accumulation_steps != 8 or args.max_steps > 0 or args.num_train_epochs != 1:
-            raise ValueError('Formal old-four run requires 32 ranks, accumulation 8 and one whole epoch')
+            raise ValueError('Reference Stage 3 training requires 32 ranks, accumulation 8 and one whole epoch')
         if args.learning_rate != 2e-4 or args.seed != 42 or args.lora_r != 32 or args.lora_alpha != 16:
             raise ValueError('Formal optimizer/LoRA recipe mismatch')
     args.remove_unused_columns = False
@@ -142,7 +142,7 @@ def main():
     data_args.model_type = 'qwen3vl'
     dataset,manifest = load_full_dataset(processor,data_args,spatial,run.full_manifest,allow_smoke=run.full_smoke)
     if run.full_smoke:
-        # Exercise R2R masks, RxR spans and both DAgger action-only sources.
+        # Exercise eligible R2R and RxR subtask/landmark supervision.
         from torch.utils.data import Subset
         import numpy as np
         chosen,offset = [],0
@@ -163,7 +163,7 @@ def main():
               'gradient_accumulation_steps':args.gradient_accumulation_steps,
               'global_batch_size':args.world_size*args.gradient_accumulation_steps*args.per_device_train_batch_size,
               'lora':{'enabled':True,'r':args.lora_r,'alpha':args.lora_alpha,'dropout':args.lora_dropout,'target_modules':'all-linear'},
-              'base_model':model_args.model_name_or_path,'init_checkpoint':run.full_init,'stage':'expert25_annotated_continuation'}
+              'base_model':model_args.model_name_or_path,'init_checkpoint':run.full_init,'stage':'stage3'}
     if run.full_resume:
         resume = Path(run.full_resume)
         previous = json.loads((resume/'experiment_recipe.json').read_text())
@@ -237,6 +237,11 @@ def main():
                 spatial_args=spatial,vggt_teacher=teacher,full_processor=processor,full_recipe=recipe,
                 callbacks=callbacks)
     trainer.train(resume_from_checkpoint=run.full_resume or None)
+    # All ranks participate in the DeepSpeed save. The epoch-named export is
+    # directly usable for inference; trainer checkpoints retain optimizer state.
+    completed_epoch = (not run.full_smoke and trainer.state.global_step == total_steps)
+    if completed_epoch:
+        trainer.save_model(str(output / 'stage3-epoch1'))
     if dist.is_initialized():
         dist.barrier()
     if args.process_index == 0:

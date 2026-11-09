@@ -6,7 +6,13 @@ from pathlib import Path
 import tempfile
 
 
-def verify_model_identity(base, checkpoint, stage='final-2461', force=False):
+def verify_model_identity(base, checkpoint=None, stage='stage3-epoch1', force=False):
+    """Verify the released base, plus a released adapter when one is supplied.
+
+    A user-trained adapter has different tensor hashes. Its loader explicitly
+    requests base-only verification and separately validates its architecture,
+    recipe, adapter tensors and temporal state.
+    """
     identity_path = Path(__file__).resolve().parents[2] / 'config' / 'model_identity.json'
     identity = json.loads(identity_path.read_text())
     cache_path = Path(os.environ.get('GUIDEDNAV_HASH_CACHE',
@@ -16,7 +22,10 @@ def verify_model_identity(base, checkpoint, stage='final-2461', force=False):
     except (OSError, ValueError):
         cache = {}
     verified = []
-    for folder, name in ((Path(base), 'base-19450'), (Path(checkpoint), stage)):
+    payloads = [(Path(base), 'navigation-base')]
+    if checkpoint is not None:
+        payloads.append((Path(checkpoint), stage))
+    for folder, name in payloads:
         for filename, expected in identity[name].items():
             path = (folder / filename).resolve()
             stat = path.stat()

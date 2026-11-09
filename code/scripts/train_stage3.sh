@@ -5,19 +5,19 @@ RELEASE_ROOT="$(cd -- "$CODE_ROOT/.." && pwd)"
 export PYTHONPATH="$CODE_ROOT/src:${PYTHONPATH:-}"
 export HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 TOKENIZERS_PARALLELISM=false
 export OMP_NUM_THREADS="${OMP_NUM_THREADS:-4}"
-BASE="${GUIDEDNAV_BASE:-$RELEASE_ROOT/weights/base-19450}"
-INIT="${GUIDEDNAV_INIT:-$RELEASE_ROOT/weights/initialization-6656}"
+BASE="${GUIDEDNAV_BASE:-$RELEASE_ROOT/weights/navigation-base}"
+INIT="${GUIDEDNAV_INIT:-$RELEASE_ROOT/weights/stage3-initialization}"
 : "${FULL_MANIFEST:?Set FULL_MANIFEST to the verified, relocated training manifest}"
 : "${MASTER_ADDR:?Set the rendezvous host reachable by every training node}"
 : "${NODE_RANK:?Set NODE_RANK to 0..3 for the reference 4-node run}"
-OUT="${FULL_OUTPUT_DIR:-$RELEASE_ROOT/runs/final-stage}"
+OUT="${FULL_OUTPUT_DIR:-$RELEASE_ROOT/runs/stage3}"
 VGGT_SOURCE="${VGGT_SOURCE:-$CODE_ROOT/third_party/vggt}"
 VGGT_WEIGHTS="${VGGT_WEIGHTS:-$RELEASE_ROOT/assets/vggt/vggt.pt}"
-python "$CODE_ROOT/tools/verify_model_identity.py" --base "$BASE" --checkpoint "$INIT" --stage initialization-6656
+python "$CODE_ROOT/tools/verify_model_identity.py" --base "$BASE" --checkpoint "$INIT" --stage stage3-initialization
 args=(
   --model_name_or_path "$BASE" --full_init "$INIT"
   --full_manifest "$FULL_MANIFEST" --output_dir "$OUT"
-  --full_stop_step 2461 --num_train_epochs 1
+  --num_train_epochs 1
   --per_device_train_batch_size 1 --gradient_accumulation_steps 8
   --learning_rate 2e-4 --lr_scheduler_type cosine --warmup_ratio 0.03
   --weight_decay 0.01 --adam_beta1 0.9 --adam_beta2 0.999 --adam_epsilon 1e-8 --max_grad_norm 1
@@ -42,4 +42,4 @@ if [[ "${FULL_SMOKE:-0}" == 1 ]]; then
 fi
 exec python -m torch.distributed.run --nnodes "${NNODES:-4}" --nproc_per_node "${NPROC_PER_NODE:-8}" \
   --node_rank "$NODE_RANK" --master_addr "$MASTER_ADDR" --master_port "${MASTER_PORT:-29571}" \
-  -m qwenvl.train.train_full_e6 "${args[@]}"
+  -m qwenvl.train.train_stage3 "${args[@]}"

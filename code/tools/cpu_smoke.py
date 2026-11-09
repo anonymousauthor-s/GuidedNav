@@ -10,8 +10,8 @@ import tempfile
 
 def main():
     modules = [
-        'qwenvl.train.train_full_e6', 'qwenvl.data.full_vln_dataset',
-        'qwenvl.train.full_e6_trainer', 'qwenvl.train.native_attention',
+        'qwenvl.train.train_stage3', 'qwenvl.data.full_vln_dataset',
+        'qwenvl.train.stage3_trainer', 'qwenvl.train.native_attention',
         'qwenvl.inference', 'qwenvl.reference_policy', 'qwenvl.infer_frames',
         'vggt.models.vggt',
     ]
@@ -41,7 +41,7 @@ def main():
         else:
             raise AssertionError('Incorrect base must fail closed')
     commands = [
-        [sys.executable, '-m', 'qwenvl.train.train_full_e6', '--help'],
+        [sys.executable, '-m', 'qwenvl.train.train_stage3', '--help'],
         [sys.executable, '-m', 'qwenvl.infer_frames', '--help'],
         [sys.executable, str(Path(__file__).with_name('prepare_data_manifest.py')), '--help'],
         [sys.executable, str(Path(__file__).with_name('download_teacher.py')), '--help'],

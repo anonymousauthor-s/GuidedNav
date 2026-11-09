@@ -1,9 +1,9 @@
 {
   "verified_on": "2026-11-09",
-  "scope": "Anonymous final-2461 code package; validation does not assert an end-to-end GPU rerun.",
+  "scope": "Anonymous Stage 3 epoch-1 code package; validation does not assert an end-to-end GPU rerun.",
   "static": {
-    "python_files_parsed": 85,
-    "json_files_parsed": 5,
+    "python_files_parsed": 87,
+    "json_files_parsed": 6,
     "bash_scripts_syntax_checked": 2,
     "private_identifiers_scan_passed": true,
     "reference_inference_methods_ast_identical": [
@@ -12,14 +12,15 @@
       "_generate_chunk",
       "_run_generation"
     ],
-    "temporal_merge_sha256_matches_registered_final_source": true
+    "temporal_merge_sha256_matches_registered_final_source": true,
+    "vggt_reference_file_hashes_match": true
   },
   "training_cpu_smoke": {
     "passed": true,
     "imported_modules": [
-      "qwenvl.train.train_full_e6",
+      "qwenvl.train.train_stage3",
       "qwenvl.data.full_vln_dataset",
-      "qwenvl.train.full_e6_trainer",
+      "qwenvl.train.stage3_trainer",
       "qwenvl.train.native_attention",
       "qwenvl.inference",
       "qwenvl.reference_policy",
@@ -111,5 +112,45 @@
     "final_source_constructor_does_not_call_legacy_rgb_dependency_comparison": true,
     "cluster_mount_path_scan_passed": true,
     "scope": "Static and isolated CPU helper checks after the final portability edit; previous original-data decode results remain applicable because the final data path bypasses the changed legacy comparison."
+  },
+  "stage3_source_update": {
+    "public_stage_names": true,
+    "fixed_checkpoint_number_removed_from_launcher": true,
+    "training_duration": "One epoch derived from dataset length and distributed batch settings",
+    "epoch_named_inference_export": "stage3-epoch1",
+    "self_trained_weights_option": "--weights-source trained",
+    "tensor_identity_values_unchanged": true,
+    "targeted_cpu_checks": {
+      "passed": true,
+      "weight_source_dispatch": 2,
+      "invalid_weight_source_rejected": true,
+      "temporal_recipe_positive_negative": true,
+      "epoch_stop_saves_final_state": true,
+      "nonfinite_trained_gate_rejected": 3
+    },
+    "shell_syntax_checks_passed": true,
+    "gpu_export_and_generation_executed": false
+  },
+  "public_data_alignment": {
+    "passed": true,
+    "text_normalization": "none; exact UTF-8",
+    "r2r_rows": 157465,
+    "rxr_rows": 472323,
+    "r2r_unique_instructions": 10703,
+    "rxr_unique_instructions": 7953,
+    "missing_or_ambiguous_matches": 0,
+    "loader_inputs_roundtripped": 629788,
+    "verified_fields": [
+      "instruction",
+      "actions",
+      "history frame paths",
+      "normalized action prompt",
+      "mask targets",
+      "label arrays",
+      "frozen row selection"
+    ],
+    "collected_pose_hashes_verified": true,
+    "rgb_pixels_rerendered": false,
+    "scope": "Final Stage 3 selection; full Guided annotation corpus remains outside this check."
   }
 }

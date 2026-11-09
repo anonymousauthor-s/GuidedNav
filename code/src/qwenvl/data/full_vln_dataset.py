@@ -1,4 +1,4 @@
-"""Manifest-pinned action inputs with E6 temporal inputs and training-only S/O."""
+"""Manifest-pinned action inputs with temporal inputs and training-only S/O."""
 import hashlib
 import json
 from pathlib import Path
@@ -57,7 +57,7 @@ class FullSourceDataset(SOMADataset):
         current_index = int(Path(self._base_paths[-1]).stem)
         expected_ages = [age for age in (3,2,1) if current_index-age >= 1]
         if ages != expected_ages:
-            raise ValueError('Missing non-boundary E6 local4 RGB frame')
+            raise ValueError('Missing non-boundary local four-frame RGB frame')
         if auxiliary:
             encoded = self.processor.image_processor(auxiliary,return_tensors='pt')
             item['current_aux_pixel_values'] = encoded['pixel_values']
@@ -83,7 +83,7 @@ class FullSourceDataset(SOMADataset):
 class FullVLNCollator(NativeCollator):
     def __call__(self,instances):
         if len(instances) != 1:
-            raise ValueError('Full E6 recipe requires microbatch one')
+            raise ValueError('Stage 3 recipe requires microbatch one')
         batch = super().__call__(instances)
         item = instances[0]
         for name in ('current_aux_pixel_values','current_aux_grid_thw','current_aux_ages'):

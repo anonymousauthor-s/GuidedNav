@@ -6,6 +6,11 @@ from transformers import AutoProcessor, AutoTokenizer, Qwen3VLForConditionalGene
 from qwenvl.temporal_token_merge import TemporalMergeConfig, TemporalResidualGate, parse_temporal_decay
 
 
+def validate_temporal_gate(gate):
+    if not torch.isfinite(gate.raw_gate).all() or not torch.isfinite(gate()).all():
+        raise ValueError('Nonfinite temporal gate')
+
+
 def validate_final_recipe(checkpoint):
     recipe = json.loads((Path(checkpoint) / 'experiment_recipe.json').read_text())
     expected = dict(current_merge_enable=True, current_window_size=4, current_merge_ratio=0.25,
@@ -21,9 +26,12 @@ def validate_final_recipe(checkpoint):
 
 
 def load_final_model(checkpoint, base, device, min_pixels=12544, max_pixels=200704,
-                     attention='sdpa'):
+                     attention='sdpa', weights_source='released'):
     from qwenvl.model_identity import verify_model_identity
-    verify_model_identity(base, checkpoint, 'final-2461')
+    if weights_source not in {'released', 'trained'}:
+        raise ValueError('weights_source must be released or trained')
+    verify_model_identity(base, checkpoint if weights_source == 'released' else None,
+                          'stage3-epoch1')
     validate_final_recipe(checkpoint)
     checkpoint, base = Path(checkpoint), Path(base)
     for filename in ('adapter_model.safetensors', 'adapter_config.json',
@@ -76,7 +84,7 @@ def load_final_model(checkpoint, base, device, min_pixels=12544, max_pixels=2007
     return model, processor, processor.tokenizer
 
 
-def create_policy(checkpoint, base, device='cuda', attention='sdpa'):
+def create_policy(checkpoint, base, device='cuda', attention='sdpa', weights_source='released'):
     from collections import OrderedDict
     from qwenvl.reference_policy import ReferencePolicy
     checkpoint = Path(checkpoint)
@@ -98,9 +106,9 @@ def create_policy(checkpoint, base, device='cuda', attention='sdpa'):
         raise ValueError('Incomplete auxiliary state')
     gate.load_state_dict(auxiliary['temporal_residual_gate'], strict=True)
     gate.to(device=device, dtype=torch.float32).eval()
-    if not torch.isfinite(gate()):
-        raise ValueError('Nonfinite temporal gate')
-    model, processor, tokenizer = load_final_model(checkpoint, base, device, attention=attention)
+    validate_temporal_gate(gate)
+    model, processor, tokenizer = load_final_model(checkpoint, base, device, attention=attention,
+                                                  weights_source=weights_source)
     policy = ReferencePolicy()
     settings = dict(model=model, processor=processor, tokenizer=tokenizer,
                     device=torch.device(device), num_history=8,
