@@ -6,6 +6,10 @@ import argparse
 import sys
 import os
 import torch
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import habitat_extensions  # Register the English RxR dataset before config loading.
 
 from omegaconf import OmegaConf
 from PIL import Image
@@ -108,6 +112,15 @@ class VLNHabitatRunner:
         self.goal_stop_dist = float(goal_stop_dist)
         self.sim_gpu = int(sim_gpu)
 
+        if Path(self.config_path).name in ('vln_r2r_train.yaml', 'vln_rxr_train.yaml'):
+            if self.split != 'train' or not self.data_path:
+                raise ValueError('Training collection requires --split train and an explicit --data_path')
+            path = Path(self.data_path).resolve()
+            if (any(part.lower() in {'val_seen', 'val_unseen', 'test', 'test_challenge'} for part in path.parts)
+                    or not path.name.startswith('train') or not path.name.endswith('.json.gz')):
+                raise ValueError('Use official train*.json.gz episodes for training collection')
+            self.data_path = str(path)
+            os.environ['VLN_TRAIN_DATA_PATH'] = self.data_path
         self.config = get_habitat_config(self.config_path)
 
     def config_env(self, scene: str = None) -> habitat.Env:

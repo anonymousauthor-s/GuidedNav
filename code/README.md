@@ -1,41 +1,33 @@
 # GuidedNav · Code
 
-[Project page](https://anonymousauthor-s.github.io/GuidedNav/) · [Inference](#inference) · [Training](#stage-3-training) · [Data](#training-data) · [Models](#models-and-directory-layout) · [Evaluation](#habitat-evaluation)
+[Project](https://anonymousauthor-s.github.io/GuidedNav/) · [Inference](#inference) · [Evaluation](#habitat-evaluation) · [Training](TRAINING.md) · [Data](DATA.md) · [Model](MODELS.md)
 
-This directory contains frame-policy inference, R2R-CE/RxR-CE evaluation, and **Stage 3 guidance fine-tuning for one epoch**. It starts from navigation-pretrained weights and a supplied Stage 3 initialization. Reconstructing the earlier training stages is outside this package's scope.
+Download the final paper model for inference and benchmark evaluation, or
+train your own model with the three-stage recipe. Training starts from official
+Qwen3-VL-8B-Instruct and uses your own outputs at each stage.
 
-## Models and directory layout
-
-The complete model bundle and selected Stage 3 data add-on are available in the [public release](https://github.com/anonymousauthor-s/GuidedNav/releases/). See the [download guide](https://anonymousauthor-s.github.io/GuidedNav/guide/models/) or run from `code/`:
-
-```bash
-python tools/download_assets.py --group inference
-```
+## Model and directory layout
 
 ```text
 GuidedNav/
-├── code/                              # inference, training and evaluation
-├── weights/
-│   ├── navigation-base/               # full navigation-pretrained backbone
-│   ├── stage3-initialization/         # Stage 3 initialization
-│   └── stage3-epoch1/                 # reported final adapter and auxiliary weights
-├── annotations/                      # frozen labels, masks and selection arrays
-├── prompt-metadata/                  # exact per-row prompt choices
-├── data/
-│   ├── pose-manifest.json            # hashes of collected trajectories
-│   ├── r2r/traj/                     # released poses and actions
-│   ├── rxr/traj/
-│   ├── r2r/rgb/                      # locally rendered observations
-│   ├── rxr/rgb/
-│   ├── datasets/                     # official benchmark episodes
-│   └── scene_datasets/               # licensed scenes from upstream
-├── stage3-training-data/             # locally materialized training records
-└── assets/vggt/vggt.pt               # separately obtained training teacher
+├── code/                         # training, inference, evaluation and tools
+├── weights/                      # downloaded final paper model only
+│   ├── navigation-base/          # required backbone component
+│   └── stage3-epoch1/             # matching final adapter and temporal state
+├── runs/                         # your locally trained outputs
+│   ├── stage1/stage1-epoch1/
+│   ├── stage2/stage2-epoch1/
+│   └── stage3/stage3-epoch1/
+├── annotations/                  # released Stage 3 labels and masks
+├── prompt-metadata/              # released prompt choices
+├── data/                         # trajectories, official scenes and datasets
+├── stage3-training-data/         # locally materialized guidance records
+└── assets/vggt/vggt.pt           # training-only teacher
 ```
 
-Both adapters require `navigation-base`; neither is a standalone 8B model. Keep each adapter's auxiliary weights, processor, and recipe together. The inference bundle is approximately **16.60 GiB**, including the full BF16 navigation VLM, adapter, and learned auxiliary weights with the temporal gate. Including the Stage 3 initialization gives approximately **16.86 GiB** of model assets. A vanilla Qwen checkpoint does not replace the navigation-pretrained backbone. The VGGT teacher and training annotations are not needed at inference and are separate from these model-size totals.
-
-All commands below run from `code/`. Use the separate environments in [ENVIRONMENT.md](ENVIRONMENT.md): frame inference, Stage 3 training, and Habitat rendering/evaluation have different dependencies.
+The downloaded backbone and final adapter together are **one evaluation model**,
+approximately 16.60 GiB in BF16. Intermediate training models are not released.
+All commands below run from `code/`; see [environments](ENVIRONMENT.md).
 
 ## Inference
 
@@ -95,7 +87,7 @@ The default `--weights-source released` verifies the released model's identity. 
 
 ```bash
 python -m qwenvl.infer_frames \
-  --base ../weights/navigation-base \
+  --base /absolute/path/to/runs/stage2/stage2-epoch1 \
   --checkpoint /absolute/path/to/your-run/stage3-epoch1 \
   --weights-source trained \
   --instruction 'Walk through the doorway and stop beside the table.' \
@@ -104,77 +96,34 @@ python -m qwenvl.infer_frames \
 
 The trained-model path still checks backbone compatibility, the saved recipe, and required tensors.
 
+## Training
+
+The [three-stage guide](TRAINING.md) gives data preparation, launch commands and
+stage handoff:
+
+| Stage | Data | Update | Entry point |
+| --- | --- | --- | --- |
+| 1 | R2R/RxR experts + visual instruction data | Full parameters | `scripts/train_stage1.sh` |
+| 2 | DAgger + the same visual instruction mixture | Full parameters | `scripts/train_stage2.sh` |
+| 3 | Annotated R2R/RxR experts | LoRA + guidance | `scripts/train_stage3.sh` |
+
+No training launcher requires a downloaded intermediate GuidedNav checkpoint.
+Each stage reads your preceding stage's export.
+
 ## Training data
 
-Follow [DATA.md](DATA.md) to obtain the official benchmark assets, prepare the complete annotation/trajectory package, render RGB observations, relocate the manifest, and obtain the VGGT teacher.
-
-| Stage 3 source | Selected training rows |
-| --- | ---: |
-| R2R | 157,465 |
-| RxR | 472,323 |
-| **Total** | **629,788** |
-
-This stage adds no DAgger or VQA rows. Earlier navigation training is carried by the pretrained assets.
-
-Download the complete selected Stage 3 add-on with `python tools/download_assets.py --group data`. Combine it with official instructions and licensed scenes to reconstruct the Stage 3 training data: it supplies step-aligned labels, exact selected rows, recorded poses/actions, and prompt metadata. RGB can be rendered from the recorded poses. Preserve the frozen sample selection and frame correspondence when preparing the data.
-
-After preparing a relocated manifest, check example decoding and collation in the **training environment** before launching a distributed run:
+Follow [DATA.md](DATA.md) for original benchmark assets, upstream visual
+instruction data, DAgger collection, guidance annotations and the teacher.
+Download the selected guidance add-on with:
 
 ```bash
-export PYTHONPATH="$PWD/src"
-export FULL_MANIFEST=/absolute/path/to/manifest.local.json
-python tools/smoke_dataset.py \
-  --manifest "$FULL_MANIFEST" \
-  --processor ../weights/stage3-initialization \
-  --per-source 2
+python tools/download_assets.py --group data
 ```
 
-This check loads the processor and examples without loading the 8B policy or VGGT weights.
-
-## Stage 3 training
-
-### Reference setup
-
-The launcher reproduces the one-epoch guidance stage with a fresh optimizer and scheduler:
-
-| Setting | Value |
-| --- | --- |
-| Training GPUs | 32: 4 nodes × 8 GPUs |
-| Batch size | 1 per GPU, accumulation 8; global batch 256 |
-| Epochs | 1 |
-| Optimizer | AdamW; learning rate `2e-4`; weight decay `0.01` |
-| Schedule | Cosine decay; 3% warmup |
-| LoRA | Rank 32, alpha 16, dropout 0; all supported linear layers |
-| Precision and distribution | BF16; DeepSpeed ZeRO-2 |
-| Seed | 42 |
-| Guidance weights | Subtask `0.01`, landmark `0.01`, long-horizon `0.5`, local `0.1` |
-
-The paper's 64-GPU cluster includes training and asynchronous evaluation. This training launcher uses 32 GPUs. A smaller configuration needs a separately validated batch and schedule.
-
-### Launch on four nodes
-
-Prepare the training environment in [ENVIRONMENT.md](ENVIRONMENT.md#final-stage-training). Mount the repository, data, teacher, and weights at the same absolute paths on every node. On each node, set its rank and a shared rendezvous address:
-
-```bash
-export FULL_MANIFEST=/absolute/path/to/manifest.local.json
-export MASTER_ADDR=training-rendezvous-host
-export NODE_RANK=0  # use 0, 1, 2, or 3 on the corresponding node
-export NCCL_SOCKET_IFNAME=your_training_network_interface
-export FULL_OUTPUT_DIR=/absolute/path/to/new-empty-run
-bash scripts/train_stage3.sh
-```
-
-The launcher uses `weights/navigation-base` and `weights/stage3-initialization` by default. Set `GUIDEDNAV_BASE`, `GUIDEDNAV_INIT`, `VGGT_SOURCE`, or `VGGT_WEIGHTS` to override their locations. It restores the initialization adapter and all learned auxiliary components, then starts the one-epoch Stage 3 optimization.
-
-After the epoch, the inference-ready adapter, auxiliary weights, and processor are exported to:
-
-```text
-$FULL_OUTPUT_DIR/stage3-epoch1/
-```
-
-Complete `checkpoint-*` trainer directories retain the optimizer state for interrupted-run recovery. To resume, set `FULL_RESUME` to a complete trainer checkpoint and rerun the same launcher. The supplied Stage 3 initialization starts a fresh optimization stage and does not contain optimizer-resume state.
-
-For a two-update diagnostic, use `FULL_SMOKE=1` and a separate empty output directory. `NNODES=1 NPROC_PER_NODE=1` can reduce its worker count if memory permits. Changing the worker count changes the effective batch and schedule; this diagnostic does not reproduce the reference model.
+The add-on covers 157,465 R2R and 472,323 English RxR rows, with aligned masks,
+collected poses/actions and prompt choices. Its correspondence to official text
+has been checked across all 629,788 rows. Earlier-stage corpora are prepared
+separately and are not included in this annotation download.
 
 ## Habitat evaluation
 
@@ -192,7 +141,8 @@ Use a fresh `EVAL_OUTPUT` directory for each run because episode results are app
 To evaluate your own exported model:
 
 ```bash
-GUIDEDNAV_MODEL=/absolute/path/to/your-run/stage3-epoch1 \
+GUIDEDNAV_BASE=/absolute/path/to/runs/stage2/stage2-epoch1 \
+GUIDEDNAV_MODEL=/absolute/path/to/runs/stage3/stage3-epoch1 \
 GUIDEDNAV_WEIGHTS_SOURCE=trained \
 EVAL_OUTPUT=/absolute/path/to/new-evaluation-directory \
 bash scripts/evaluate.sh r2r

@@ -2,7 +2,7 @@
 
 Training and Habitat use separate runtimes. The original training image did not contain Habitat. Do not force old Habitat simulator dependencies into the training image.
 
-## Final-stage training
+## Training
 
 `config/training_environment.json` records package versions read from the exact image used by the selected final-stage run. The important versions are Python 3.12.3, Torch 2.10.0a0+b558c986e8.nv25.11, TorchVision 0.25.0a0+7a13ad0f, Transformers 4.57.6, PEFT 0.19.1, Accelerate 1.14.0, DeepSpeed 0.16.5 and FlashAttention 2.7.4.post1+25.11. This is a development Torch build, so a normal `pip install torch==2.10.0` does not recreate it.
 
@@ -17,7 +17,7 @@ docker run --rm --gpus all --ipc=host --network host \
   /release/code/tools/check_environment.py --training
 ```
 
-The Dockerfile has not been rebuilt during packaging. Compare the check output with the recorded environment before the dataset/gradient smoke. Configure NVIDIA drivers compatible with the container's CUDA release according to NVIDIA's documentation. Distributed launch requires the same release and data paths on every node, working NCCL transport and enough memory for an 8B VLM plus frozen VGGT teacher. The reference recipe used 32 GPUs; a smaller hardware configuration needs a separately validated recipe.
+The Dockerfile has not been rebuilt during packaging. Compare the check output with the recorded environment before the dataset/gradient smoke. Configure NVIDIA drivers compatible with the container's CUDA release according to NVIDIA's documentation. Distributed launch requires the same release and data paths on every node, working NCCL transport and enough memory for an 8B VLM plus frozen VGGT teacher. The launch scripts default to 32 GPUs with global batch 256; a smaller hardware configuration needs a separately validated recipe.
 
 ## Frame-policy inference
 

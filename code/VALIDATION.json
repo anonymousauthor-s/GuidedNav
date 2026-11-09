@@ -1,10 +1,9 @@
 {
   "verified_on": "2026-11-09",
-  "scope": "Anonymous Stage 3 epoch-1 code package; validation does not assert an end-to-end GPU rerun.",
+  "scope": "Final paper evaluation model and paper-recipe three-stage training code; validation does not assert an end-to-end GPU rerun.",
   "static": {
-    "python_files_parsed": 88,
-    "json_files_parsed": 7,
-    "bash_scripts_syntax_checked": 2,
+    "python_files_parsed": 93,
+    "json_files_parsed": 10,
     "private_identifiers_scan_passed": true,
     "reference_inference_methods_ast_identical": [
       "_build_infer_messages",
@@ -13,7 +12,8 @@
       "_run_generation"
     ],
     "temporal_merge_sha256_matches_registered_final_source": true,
-    "vggt_reference_file_hashes_match": true
+    "vggt_reference_file_hashes_match": true,
+    "bash_scripts_syntax_checked_historical": 2
   },
   "training_cpu_smoke": {
     "passed": true,
@@ -30,7 +30,8 @@
     "cli_help_checks": 6,
     "history_cases": 6,
     "identity_negative_check": true,
-    "cuda_visible": false
+    "cuda_visible": false,
+    "applies_to": "Historical final-stage packaging checks before the three-stage training-code update; not validation of the new Stage 1/2 entrypoints."
   },
   "dataset_cpu_smoke": {
     "rows": 629788,
@@ -60,7 +61,8 @@
         "current_patch_count": 192
       }
     ],
-    "passed": true
+    "passed": true,
+    "applies_to": "Historical final-stage packaging checks before the three-stage training-code update; not validation of the new Stage 1/2 entrypoints."
   },
   "dataset_smoke_scope": "Read-only original final-stage sources, arrays, RGB and masks; transient manifest adjusted mtime and resolved sidecar paths only; two positive S/O samples per source; processor only, no 8B/VGGT model loaded. The anonymous exported data package is separately validated.",
   "habitat_cpu_smoke": {
@@ -76,7 +78,8 @@
       0.88,
       0.18
     ],
-    "cuda_visible": ""
+    "cuda_visible": "",
+    "applies_to": "Historical final-stage packaging checks before the three-stage training-code update; not validation of the new Stage 1/2 entrypoints."
   },
   "runtime_isolation": {
     "training_smoke_network": "disabled",
@@ -129,7 +132,8 @@
       "nonfinite_trained_gate_rejected": 3
     },
     "shell_syntax_checks_passed": true,
-    "gpu_export_and_generation_executed": false
+    "gpu_export_and_generation_executed": false,
+    "applies_to": "Historical final-stage packaging checks before the three-stage training-code update; not validation of the new Stage 1/2 entrypoints."
   },
   "public_data_alignment": {
     "passed": true,
@@ -156,7 +160,7 @@
   "archive_privacy": {
     "anonymous_archive_headers": true,
     "files": 398110,
-    "safetensors_metadata": "Only format=pt in all four base shards and both adapters"
+    "safetensors_metadata": "Only format=pt in all four backbone shards and the final adapter; no training-initialization adapter is distributed."
   },
   "asset_release": {
     "download_tool": {
@@ -192,5 +196,35 @@
     "trajectories_array_equal_to_training_source": 18656,
     "base_tensor_files_byte_identical": 4,
     "all_uploaded_assets_server_sha256_verified": true
+  },
+  "three_stage_training_update": {
+    "recipe": "Stage 1 expert navigation + VQA full fine-tuning; Stage 2 DAgger + same VQA full fine-tuning; Stage 3 annotated experts with fresh LoRA and guidance.",
+    "intermediate_weights_released": false,
+    "training_inputs": "Official Qwen starting model and locally produced stage exports; no downloaded GuidedNav initialization required.",
+    "local_cpu_contract_checks": {
+      "passed": true,
+      "manifest_negative_cases": 8,
+      "manifest_positive_stages": 2,
+      "optimizer_group_coverage_and_learning_rates": true,
+      "assistant_only_label_boundaries": true,
+      "data_source_hash_and_selection_checks": true,
+      "data_and_assistant_mask_cases": 29,
+      "dagger_collection_cases": 31,
+      "dagger_fake_policy_environment_rollout": true,
+      "dagger_jpeg_npz_export_and_actual_sample_builder": true
+    },
+    "fresh_full_dependency_imports": false,
+    "fresh_full_dependency_imports_note": "New runtime imports were not executed; isolated remote verification was unavailable. The local Python runtime does not contain Torch/Transformers.",
+    "gpu_training_executed": false,
+    "historical_frozen_training_corpus_reconstructed": false,
+    "scope": "The training implementation follows the paper setup; newly collected DAgger states and locally selected VQA rows are new inputs unless the original frozen selections are supplied.",
+    "dagger_test_scope": "CPU fake-policy/fake-environment rollout with actual JPEG/NPZ writing and sample building. Qwen/Habitat GPU collection was not executed."
+  },
+  "final_model_only_update": {
+    "released_policy": "Stage 3, epoch 1",
+    "final_tensor_identity_unchanged": true,
+    "final_evaluation_generation_methods_unchanged": true,
+    "initialization_adapter_removed_from_release": true,
+    "self_trained_stage2_backbones_use_architecture_checks": "Released paper model hashes remain enforced in released mode; trained mode validates compatible user-trained full backbones."
   }
 }

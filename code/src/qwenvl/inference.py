@@ -27,11 +27,13 @@ def validate_final_recipe(checkpoint):
 
 def load_final_model(checkpoint, base, device, min_pixels=12544, max_pixels=200704,
                      attention='sdpa', weights_source='released'):
-    from qwenvl.model_identity import verify_model_identity
+    from qwenvl.model_identity import verify_model_identity, verify_training_backbone
     if weights_source not in {'released', 'trained'}:
         raise ValueError('weights_source must be released or trained')
-    verify_model_identity(base, checkpoint if weights_source == 'released' else None,
-                          'stage3-epoch1')
+    if weights_source == 'released':
+        verify_model_identity(base, checkpoint, 'stage3-epoch1')
+    else:
+        verify_training_backbone(base)
     validate_final_recipe(checkpoint)
     checkpoint, base = Path(checkpoint), Path(base)
     for filename in ('adapter_model.safetensors', 'adapter_config.json',

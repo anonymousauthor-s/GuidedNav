@@ -8,8 +8,7 @@
       "bytes": 1073741824,
       "sha256": "6082e4fac212c244e71370c52d93003a42701d7d78b3df028ce32adf11c3e40e",
       "groups": [
-        "inference",
-        "training"
+        "inference"
       ]
     },
     {
@@ -18,8 +17,7 @@
       "bytes": 1073741824,
       "sha256": "adba6087127f9c2972b3ed43e91d0ff1e18207ca0da844e79433058de0b6c095",
       "groups": [
-        "inference",
-        "training"
+        "inference"
       ]
     },
     {
@@ -28,8 +26,7 @@
       "bytes": 1073741824,
       "sha256": "7cfa1f0a8ac724e9636eaeedc8513bde575903413eade1642ea45e611fac9f9b",
       "groups": [
-        "inference",
-        "training"
+        "inference"
       ]
     },
     {
@@ -38,8 +35,7 @@
       "bytes": 1073741824,
       "sha256": "0f4483209f32a9914bcdf757886467ac5f7b26ec95af35062e712b4ca4bc1f24",
       "groups": [
-        "inference",
-        "training"
+        "inference"
       ]
     },
     {
@@ -48,8 +44,7 @@
       "bytes": 703089256,
       "sha256": "04bebfe4ed744e59ab28ca46e4207b3ca33cbfbaffcb09e6da729d589922f831",
       "groups": [
-        "inference",
-        "training"
+        "inference"
       ]
     },
     {
@@ -58,8 +53,7 @@
       "bytes": 1073741824,
       "sha256": "98c275b68e366e2aad79cd1ecdac53b05383d5187f18ecc8afdd6bd6532ab9cb",
       "groups": [
-        "inference",
-        "training"
+        "inference"
       ]
     },
     {
@@ -68,8 +62,7 @@
       "bytes": 1073741824,
       "sha256": "d818434376a550b0905e81628dcaed05d4662e54a9b23cb14f04756d719a9cb7",
       "groups": [
-        "inference",
-        "training"
+        "inference"
       ]
     },
     {
@@ -78,8 +71,7 @@
       "bytes": 1073741824,
       "sha256": "5a200a7edbf09849515f5f46054f080c426bd836bf64f5f0a16ee082ccca6194",
       "groups": [
-        "inference",
-        "training"
+        "inference"
       ]
     },
     {
@@ -88,8 +80,7 @@
       "bytes": 1073741824,
       "sha256": "4f0d1f7e348147f9ea396e36694f23d1cd998efb574529caba0e03e030ccbfb1",
       "groups": [
-        "inference",
-        "training"
+        "inference"
       ]
     },
     {
@@ -98,8 +89,7 @@
       "bytes": 620995168,
       "sha256": "1ca6cbd852e62a8a892d2bec262923c925ed1db2a8bbe8654206c7443acccc10",
       "groups": [
-        "inference",
-        "training"
+        "inference"
       ]
     },
     {
@@ -108,8 +98,7 @@
       "bytes": 1073741824,
       "sha256": "d9425054305d1446bbfbc5d8e04a2053c3c9e0a10c8bcb584d09e1efff19d167",
       "groups": [
-        "inference",
-        "training"
+        "inference"
       ]
     },
     {
@@ -118,8 +107,7 @@
       "bytes": 1073741824,
       "sha256": "26cb15450ba8145bcad262dfbc4f7d44f1980f7b33f286be96d94635e60753eb",
       "groups": [
-        "inference",
-        "training"
+        "inference"
       ]
     },
     {
@@ -128,8 +116,7 @@
       "bytes": 1073741824,
       "sha256": "0a9968d9169a799836bd4ace484e2b49b1ae191b32216fd9d2c08ab8d9139181",
       "groups": [
-        "inference",
-        "training"
+        "inference"
       ]
     },
     {
@@ -138,8 +125,7 @@
       "bytes": 1073741824,
       "sha256": "a9fb9afdc4912ffb2d628be3d1e9cf94096fee377ad19a3d598edeace85c1ca0",
       "groups": [
-        "inference",
-        "training"
+        "inference"
       ]
     },
     {
@@ -148,8 +134,7 @@
       "bytes": 620995200,
       "sha256": "67eb5ddc6d83cc41c47eaddeeead3e21cf16fa15298603cd4d0a8e4412833931",
       "groups": [
-        "inference",
-        "training"
+        "inference"
       ]
     },
     {
@@ -158,8 +143,7 @@
       "bytes": 1073741824,
       "sha256": "4e2262a998c5e4459912fd0115546f2a37edca6727db499b856a9fbe369e1169",
       "groups": [
-        "inference",
-        "training"
+        "inference"
       ]
     },
     {
@@ -168,8 +152,7 @@
       "bytes": 1073741824,
       "sha256": "abfeb614c41130c7f28d0f1b0d1ac189354e8055f18a85ea185802b665895d77",
       "groups": [
-        "inference",
-        "training"
+        "inference"
       ]
     },
     {
@@ -178,18 +161,16 @@
       "bytes": 556874328,
       "sha256": "ad51472f60815546f7011e630fca6a52bf37d00f08e854248d8b688ada7c689d",
       "groups": [
-        "inference",
-        "training"
+        "inference"
       ]
     },
     {
-      "name": "guidednav-model-support.tar.gz",
-      "url": "https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/guidednav-model-support.tar.gz",
-      "bytes": 431138108,
-      "sha256": "4b8db1eaad33c514f80af687a8252c581928ce6d93283700461ebd77b1ee41c4",
+      "name": "guidednav-final-model-support.tar.gz",
+      "url": "https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/guidednav-final-model-support.tar.gz",
+      "bytes": 214540400,
+      "sha256": "4d6c994735a299362eb83c015d59b1d385d283ec7613637a67214216cf85e461",
       "groups": [
-        "inference",
-        "training"
+        "inference"
       ]
     },
     {
@@ -252,8 +233,30 @@
   ],
   "archives": [
     {
-      "asset": "guidednav-model-support.tar.gz",
-      "root": "weights"
+      "asset": "guidednav-final-model-support.tar.gz",
+      "root": "weights",
+      "metadata_updates": [
+        {
+          "path": "weights/README.md",
+          "previous_sha256": "a7d7e66092126f21eed0787c35e3d124f25657cbea2b59a239a45979637c6db3",
+          "new_sha256": "9e0c1b4b4f7079c2f15c9184557c337ca4d552541a43398fd0e7b6eea8a8b349"
+        },
+        {
+          "path": "weights/WEIGHTS_MANIFEST.json",
+          "previous_sha256": "3ee17a3c9535788f833f0ff75c38f53185941b9eb124ea4966b44c28906975ef",
+          "new_sha256": "9b63d3add3f7a11e349a70b6ea1d09375e044e8be7f34047c865c12d96bf482b"
+        },
+        {
+          "path": "weights/SHA256SUMS",
+          "previous_sha256": "447503edfb209061da9497ae6ffb898c9a343a4091c56a9e27f94b961318dad3",
+          "new_sha256": "490a163fe60804b3e52b4d72a92e72244b86f0cdc8a0d7f8daa28af7b2fdfad4"
+        },
+        {
+          "path": "weights/stage3-epoch1/experiment_recipe.json",
+          "previous_sha256": "a2256f25a0ebc98dd76ccabb6ff09ac766d32a0c1a0cccee913cdcc511d0c959",
+          "new_sha256": "82c7d4936f6f823526d0a10acc367960e03701a120e027627e08e4637f60a2cd"
+        }
+      ]
     },
     {
       "asset": "guidednav-stage3-data-addon.tar.gz",
@@ -262,9 +265,10 @@
   ],
   "groups": [
     "inference",
-    "training",
     "data"
   ],
   "data_scope": "Complete selected Stage 3 training inputs; not the entire Guided annotation corpus",
-  "scene_and_instruction_access": "Obtain original assets from official sources under their terms."
+  "scene_and_instruction_access": "Obtain original assets from official sources under their terms.",
+  "model_scope": "One complete final paper model for inference/evaluation: navigation-base plus stage3-epoch1. No intermediate training snapshots.",
+  "training_initialization": "Training uses user-produced outputs from the preceding stage; final evaluation model downloads are not training initialization."
 }

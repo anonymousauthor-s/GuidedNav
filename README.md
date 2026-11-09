@@ -4,14 +4,14 @@
 
 **Anonymous release for peer review**
 
-[Project page](https://anonymousauthor-s.github.io/GuidedNav/) · [Inference](https://anonymousauthor-s.github.io/GuidedNav/guide/inference/) · [Training](https://anonymousauthor-s.github.io/GuidedNav/guide/training/) · [Training data](https://anonymousauthor-s.github.io/GuidedNav/guide/data/) · [Model downloads](https://anonymousauthor-s.github.io/GuidedNav/guide/models/)
+[Project page](https://anonymousauthor-s.github.io/GuidedNav/) · [Inference & evaluation](https://anonymousauthor-s.github.io/GuidedNav/guide/inference/) · [Three-stage training](https://anonymousauthor-s.github.io/GuidedNav/guide/training/) · [Training data](https://anonymousauthor-s.github.io/GuidedNav/guide/data/) · [Final model](https://anonymousauthor-s.github.io/GuidedNav/guide/models/)
 
 GuidedNav learns to navigate from RGB observations and language instructions
 with subtask, landmark and spatial guidance. This repository provides the
-**full navigation model, frame-policy inference, Habitat evaluation, and the
-one-epoch Stage 3 guidance training recipe**.
+**final paper model for evaluation**, inference and evaluation code, and
+**training code and instructions for Stages 1, 2 and 3**.
 
-## Get started
+## Evaluate the final paper model
 
 ```bash
 git clone https://github.com/anonymousauthor-s/GuidedNav.git
@@ -19,74 +19,52 @@ cd GuidedNav/code
 python tools/download_assets.py --group inference
 ```
 
-The downloader requires Python 3.9+ and no account or token. It resumes downloads,
-checks SHA256 and reassembles the weights automatically. Set up the CUDA runtime
-and run your RGB sequence using the [inference guide](https://anonymousauthor-s.github.io/GuidedNav/guide/inference/).
+Install the [evaluation environment](https://anonymousauthor-s.github.io/GuidedNav/guide/environment/), prepare the official
+benchmark episodes and licensed scenes, then run:
 
-| I want to… | Open |
-| --- | --- |
-| Run the policy on my images | [Inference quick start](https://anonymousauthor-s.github.io/GuidedNav/guide/inference/) |
-| Evaluate R2R-CE / RxR-CE | [Habitat evaluation](https://anonymousauthor-s.github.io/GuidedNav/guide/inference/#habitat-evaluation) |
-| Reproduce Stage 3 training | [Training setup and launch](https://anonymousauthor-s.github.io/GuidedNav/guide/training/) |
-| Reconstruct the selected training data | [Data preparation](https://anonymousauthor-s.github.io/GuidedNav/guide/data/) |
-| Download models and annotations | [Downloads and integrity](https://anonymousauthor-s.github.io/GuidedNav/guide/models/) |
-| Install the required environments | [Environment guide](https://anonymousauthor-s.github.io/GuidedNav/guide/environment/) |
+```bash
+bash scripts/evaluate.sh r2r
+bash scripts/evaluate.sh rxr
+```
 
-## Model downloads
+The only released policy is **Stage 3, epoch 1**. Its complete BF16 model is
+16.60 GiB: the matching navigation backbone plus final adapter and temporal
+state. They are installed together and loaded as one policy. Intermediate and
+training-initialization checkpoints are not distributed.
 
-All model assets are available in the [public release](https://github.com/anonymousauthor-s/GuidedNav/releases/).
+See [inference and evaluation](https://anonymousauthor-s.github.io/GuidedNav/guide/inference/) for the full setup and
+[model downloads](https://anonymousauthor-s.github.io/GuidedNav/guide/models/) for SHA256-verified, resumable downloads.
 
-| Model directory | Contents |
-| --- | --- |
-| `weights/navigation-base/` | Full BF16 navigation-pretrained vision-language backbone |
-| `weights/stage3-epoch1/` | Reported final LoRA adapter, temporal gate, auxiliary projections and processor |
-| `weights/stage3-initialization/` | Adapter and auxiliary weights used to start Stage 3 training |
+## Train your own model
 
-The full inference model is **16.60 GiB**. This includes the vision encoder and
-language model, plus final adapter and auxiliary weights. The shared download
-also includes training initialization, bringing installed model payloads to
-**16.86 GiB**. It is not an adapter-only or quantized release. Use the supplied
-navigation base with its matching adapter; a vanilla Qwen model cannot replace it.
-See [downloads](https://anonymousauthor-s.github.io/GuidedNav/guide/models/) for disk requirements and checksums.
+| Stage | Initialization | Training data | Update |
+| --- | --- | --- | --- |
+| 1 | Official Qwen3-VL-8B-Instruct | R2R/RxR experts + VQA | Full parameters |
+| 2 | Your Stage 1 output | DAgger + the same VQA mixture | Full parameters |
+| 3 | Your Stage 2 output | Annotated R2R/RxR experts | Rank-32 LoRA + guidance |
 
-## Training data
+The [three-stage training guide](https://anonymousauthor-s.github.io/GuidedNav/guide/training/) gives launch commands,
+data manifests, the paper's optimizer settings and model handoff. Training uses
+your own outputs; downloading the final paper model is a separate evaluation path.
+
+## Prepare training data
 
 ```bash
 python tools/download_assets.py --group data
 ```
 
-The add-on contains the **complete frozen Stage 3 training selection**:
+The selected Stage 3 add-on contains **629,788 annotated rows, 379,428 masks and
+18,656 collected trajectories/actions**, together with instruction IDs/hashes
+and prompt metadata. Obtain official instructions and licensed scenes from
+upstream; the supplied tools reconstruct text and render observations.
+Expert navigation, DAgger and VQA inputs for Stages 1 and 2 are prepared
+separately. See [data preparation](https://anonymousauthor-s.github.io/GuidedNav/guide/data/) for sources, formats and
+the exact scope of the released labels.
 
-| Source | Training rows |
-| --- | ---: |
-| Guided-R2R selection | 157,465 |
-| Guided-RxR English selection | 472,323 |
-| **Total** | **629,788** |
+## Validation
 
-It includes **379,428 landmark masks, 18,656 collected trajectories/actions**, exact
-instruction IDs/hashes, selection arrays and prompt choices. This is the
-selection used by Stage 3, not the entire Guided annotation corpus. Download
-official instructions and licensed scenes from upstream, then recover the
-training text and render RGB with the supplied tools. The [data guide](https://anonymousauthor-s.github.io/GuidedNav/guide/data/)
-explains the exact correspondence and all preparation steps.
-
-## Train Stage 3
-
-The reference recipe uses one epoch, 32 training GPUs, global batch 256, BF16,
-LoRA rank 32 and DeepSpeed ZeRO-2. Earlier navigation training is represented by
-the supplied pretrained assets. Start with the [training guide](https://anonymousauthor-s.github.io/GuidedNav/guide/training/)
-to install the environment, obtain the training-only VGGT teacher, validate the
-data and launch training. The exported model is `stage3-epoch1/`.
-
-## Repository and validation
-
-```text
-code/    Inference, training, evaluation, download tools and setup instructions
-docs/    Anonymous project website and browser-accessible guides
-```
-
-Release checks cover model hashes, CPU imports/CLI, data alignment and recovered
-training inputs. Full GPU retraining, complete benchmark evaluation and
-full-dataset RGB rendering were not rerun during packaging. The [guides](https://anonymousauthor-s.github.io/GuidedNav/guide/inference/)
-describe these limits. Upstream copyright and license notices are retained;
-model/data terms are included with the [release assets](https://github.com/anonymousauthor-s/GuidedNav/releases/).
+Release checks cover model payload hashes, CPU helpers and command-line entry
+points, data correspondence and documentation links. The new three-stage
+training sequence and complete GPU benchmarks have not been rerun from this
+public package. See [validation details](code/VALIDATION.json) and retained
+[upstream notices](code/THIRD_PARTY_NOTICES.md).

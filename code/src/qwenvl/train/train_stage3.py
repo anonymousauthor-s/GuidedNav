@@ -22,7 +22,6 @@ from qwenvl.train.stage3_trainer import Stage3Trainer
 @dataclass
 class FullRunArguments:
     full_manifest: str = ''
-    full_init: str = ''
     full_resume: str = ''
     full_stop_step: int = 0
     full_smoke: bool = False
@@ -97,11 +96,11 @@ class CheckpointedFullTrainer(Stage3Trainer):
 def main():
     parser = transformers.HfArgumentParser((ModelArguments,DataArguments,TemporalSpatialArguments,TrainingArguments,FullRunArguments))
     model_args,data_args,spatial,args,run = parser.parse_args_into_dataclasses()
-    from qwenvl.model_identity import verify_model_identity
-    verify_model_identity(os.environ.get('CONTINUE_BASE',model_args.model_name_or_path),
-                          run.full_init, 'stage3-initialization')
-    if not run.full_init:
-        raise ValueError('Stage 3 initialization weights are required')
+    from qwenvl.model_identity import verify_training_backbone
+    verify_training_backbone(model_args.model_name_or_path)
+    previous_stage = Path(model_args.model_name_or_path) / 'training_recipe.json'
+    if not previous_stage.is_file() or json.loads(previous_stage.read_text(encoding='utf-8')).get('stage') != 2 or json.loads(previous_stage.read_text(encoding='utf-8')).get('smoke'):
+        raise ValueError('Stage 3 must start from your completed Stage 2 export')
     if not run.full_manifest:
         raise ValueError('A validated full mixed-source manifest is required')
     if args.per_device_train_batch_size != 1 or not args.lora_enable:
@@ -111,8 +110,8 @@ def main():
     if spatial.current_fusion_mode != 'gated_residual' or spatial.current_matching_mode != 'mutual':
         raise ValueError('Stage 3 requires mutual matching and gated residual fusion')
     if not run.full_smoke:
-        if args.world_size != 32 or args.gradient_accumulation_steps != 8 or args.max_steps > 0 or args.num_train_epochs != 1:
-            raise ValueError('Reference Stage 3 training requires 32 ranks, accumulation 8 and one whole epoch')
+        if args.world_size * args.gradient_accumulation_steps != 256 or args.max_steps > 0 or args.num_train_epochs != 1:
+            raise ValueError('Reference Stage 3 training requires global batch 256 and one whole epoch')
         if args.learning_rate != 2e-4 or args.seed != 42 or args.lora_r != 32 or args.lora_alpha != 16:
             raise ValueError('Formal optimizer/LoRA recipe mismatch')
     args.remove_unused_columns = False
@@ -136,7 +135,7 @@ def main():
         raise RuntimeError(error)
     if dist.is_initialized():
         dist.barrier()
-    processor = AutoProcessor.from_pretrained(run.full_init,local_files_only=True)
+    processor = AutoProcessor.from_pretrained(model_args.model_name_or_path,local_files_only=True)
     processor.tokenizer.model_max_length = args.model_max_length
     processor.tokenizer.padding_side = 'right'
     data_args.model_type = 'qwen3vl'
@@ -163,7 +162,7 @@ def main():
               'gradient_accumulation_steps':args.gradient_accumulation_steps,
               'global_batch_size':args.world_size*args.gradient_accumulation_steps*args.per_device_train_batch_size,
               'lora':{'enabled':True,'r':args.lora_r,'alpha':args.lora_alpha,'dropout':args.lora_dropout,'target_modules':'all-linear'},
-              'base_model':model_args.model_name_or_path,'init_checkpoint':run.full_init,'stage':'stage3'}
+              'base_model':model_args.model_name_or_path,'initialization':'fresh_lora_and_auxiliary_modules','stage':'stage3'}
     if run.full_resume:
         resume = Path(run.full_resume)
         previous = json.loads((resume/'experiment_recipe.json').read_text())
@@ -173,8 +172,11 @@ def main():
             raise ValueError('Resume checkpoint lacks trainer state or auxiliary trainable modules')
         if not list(resume.glob('global_step*')) and args.deepspeed:
             raise ValueError('ZeRO resume checkpoint lacks optimizer partitions')
-    model = Qwen3VLForConditionalGeneration.from_pretrained(os.environ.get('CONTINUE_BASE',model_args.model_name_or_path),dtype=torch.bfloat16,
-                                                           attn_implementation='flash_attention_2',local_files_only=True)
+    model,loading_info = Qwen3VLForConditionalGeneration.from_pretrained(model_args.model_name_or_path,dtype=torch.bfloat16,
+                                                           attn_implementation='flash_attention_2',local_files_only=True,
+                                                           output_loading_info=True)
+    if any(loading_info.get(k) for k in ('missing_keys','unexpected_keys','mismatched_keys','error_msgs')):
+        raise ValueError('Stage 2 full-model weights did not load exactly: '+str(loading_info))
     model.requires_grad_(False)
     try:
         import peft.tuners.lora.torchao as peft_torchao
@@ -192,29 +194,19 @@ def main():
             raise RuntimeError('Tensor parallel checkpoint loading is unsupported')
         return original_tp_shard(model,state_dict,adapter_name)
     peft_io._maybe_shard_state_dict_for_tp=shard_only_if_tensor_parallel
-    from peft import PeftModel, get_peft_model_state_dict
-    init=Path(run.full_init)
-    previous=json.loads((init/'experiment_recipe.json').read_text())
-    assert previous['full_variant']=='current_sf_native_so' and previous['lora']==recipe['lora']
-    model=PeftModel.from_pretrained(model,init,is_trainable=True)
+    from peft import LoraConfig, TaskType, get_peft_model
+    model = get_peft_model(model, LoraConfig(
+        r=args.lora_r, lora_alpha=args.lora_alpha, lora_dropout=args.lora_dropout,
+        target_modules='all-linear', init_lora_weights='gaussian', bias='none', task_type=TaskType.CAUSAL_LM))
     hidden = _hidden_size(model)
     for name in ('sf8_sf_projector','delta_sf_projector'):
         setattr(model,name,AlignProjector(hidden,1024).to(dtype=torch.bfloat16))
     model.temporal_residual_gate = TemporalResidualGate(initial_gate=spatial.current_gate_init,max_gate=spatial.current_gate_max)
-    saved=torch.load(init/'temporal_spatial_projectors.pt',map_location='cpu',weights_only=True)
-    assert set(saved)=={'sf8_sf_projector','delta_sf_projector','temporal_residual_gate'}
-    for name,state in saved.items():
-        getattr(model,name).load_state_dict(state,strict=True)
-    if args.process_index==0:
-        from safetensors.torch import load_file
-        stored=load_file(str(init/'adapter_model.safetensors'))
-        loaded=get_peft_model_state_dict(model)
-        assert set(stored)==set(loaded)
-        assert all(torch.equal(stored[k],loaded[k].detach().cpu()) for k in stored)
-        for name,state in saved.items():
-            actual=getattr(model,name).state_dict()
-            assert all(torch.equal(state[k],actual[k].detach().cpu()) for k in state)
-        (output/'initialization_audit.json').write_text(json.dumps({'exact_adapter_values':True,'exact_auxiliary_values':True,'source':str(init),'new_optimizer':not bool(run.full_resume)},indent=2))
+    if args.process_index == 0:
+        (output/'initialization_audit.json').write_text(json.dumps({
+            'source_stage':2,'source':model_args.model_name_or_path,
+            'fresh_lora':True,'fresh_auxiliary_modules':True,
+            'optimizer_resume':bool(run.full_resume)},indent=2)+'\n')
     model.config.use_cache = False
     if args.gradient_checkpointing:
         model.enable_input_require_grads()

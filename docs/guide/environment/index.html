@@ -1,16 +1,16 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Environments · GuidedNav</title><meta name="description" content="GuidedNav anonymous model, data and reproduction guide"><link rel="canonical" href="https://anonymousauthor-s.github.io/GuidedNav/guide/environment/"><link rel="stylesheet" href="../guide.css"></head><body><header><div><a class="brand" href="https://anonymousauthor-s.github.io/GuidedNav/">GuidedNav</a><nav aria-label="Documentation"><a href="https://anonymousauthor-s.github.io/GuidedNav/">Project</a><a href="../inference/">Inference</a><a href="../training/">Training</a><a href="../data/">Data</a><a href="../models/">Models</a><a href="https://github.com/anonymousauthor-s/GuidedNav/">Code ↗</a></nav></div></header><div class="layout"><aside aria-label="On this page"><div class="toc">
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Environments · GuidedNav</title><meta name="description" content="GuidedNav final evaluation model and three-stage training guide"><link rel="canonical" href="https://anonymousauthor-s.github.io/GuidedNav/guide/environment/"><link rel="stylesheet" href="../guide.css"></head><body><header><div><a class="brand" href="https://anonymousauthor-s.github.io/GuidedNav/">GuidedNav</a><nav aria-label="Documentation"><a href="https://anonymousauthor-s.github.io/GuidedNav/">Project</a><a href="../inference/">Inference</a><a href="../training/">Training</a><a href="../data/">Data</a><a href="../models/">Model</a><a href="https://github.com/anonymousauthor-s/GuidedNav/">Code ↗</a></nav></div></header><div class="layout"><aside aria-label="On this page"><div class="toc">
 <ul>
 <li><a href="#environments">Environments</a><ul>
-<li><a href="#final-stage-training">Final-stage training</a></li>
+<li><a href="#training">Training</a></li>
 <li><a href="#frame-policy-inference">Frame-policy inference</a></li>
 <li><a href="#habitat-rendering-and-benchmark-evaluation">Habitat rendering and benchmark evaluation</a></li>
 </ul>
 </li>
 </ul>
 </div>
-</aside><main class="paper"><div class="eyebrow">Anonymous research release · Stage 3</div><h1 id="environments">Environments</h1>
+</aside><main class="paper"><div class="eyebrow">Anonymous research release</div><h1 id="environments">Environments</h1>
 <p>Training and Habitat use separate runtimes. The original training image did not contain Habitat. Do not force old Habitat simulator dependencies into the training image.</p>
-<h2 id="final-stage-training">Final-stage training</h2>
+<h2 id="training">Training</h2>
 <p><code>config/training_environment.json</code> records package versions read from the exact image used by the selected final-stage run. The important versions are Python 3.12.3, Torch 2.10.0a0+b558c986e8.nv25.11, TorchVision 0.25.0a0+7a13ad0f, Transformers 4.57.6, PEFT 0.19.1, Accelerate 1.14.0, DeepSpeed 0.16.5 and FlashAttention 2.7.4.post1+25.11. This is a development Torch build, so a normal <code>pip install torch==2.10.0</code> does not recreate it.</p>
 <p>The public <a href="https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel-25-11.html">NVIDIA PyTorch 25.11 container</a> contains the same Torch build and CUDA 13.0.2. <code>Dockerfile.training</code> provides an application-environment reconstruction based on that public image:</p>
 <pre><code class="language-bash">docker build -f Dockerfile.training -t guidednav-training .
@@ -20,7 +20,7 @@ docker run --rm --gpus all --ipc=host --network host \
   --entrypoint python guidednav-training \
   /release/code/tools/check_environment.py --training
 </code></pre>
-<p>The Dockerfile has not been rebuilt during packaging. Compare the check output with the recorded environment before the dataset/gradient smoke. Configure NVIDIA drivers compatible with the container's CUDA release according to NVIDIA's documentation. Distributed launch requires the same release and data paths on every node, working NCCL transport and enough memory for an 8B VLM plus frozen VGGT teacher. The reference recipe used 32 GPUs; a smaller hardware configuration needs a separately validated recipe.</p>
+<p>The Dockerfile has not been rebuilt during packaging. Compare the check output with the recorded environment before the dataset/gradient smoke. Configure NVIDIA drivers compatible with the container's CUDA release according to NVIDIA's documentation. Distributed launch requires the same release and data paths on every node, working NCCL transport and enough memory for an 8B VLM plus frozen VGGT teacher. The launch scripts default to 32 GPUs with global batch 256; a smaller hardware configuration needs a separately validated recipe.</p>
 <h2 id="frame-policy-inference">Frame-policy inference</h2>
 <p>The deployed frame runtime recorded Torch 2.8.0+cu128, Transformers 4.57.6, PEFT 0.17.1 and Accelerate 1.10.1. Create a separate Python 3.10/3.11 CUDA environment:</p>
 <pre><code class="language-bash">python -m venv .venv-inference

@@ -1,6 +1,13 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Training data · GuidedNav</title><meta name="description" content="GuidedNav anonymous model, data and reproduction guide"><link rel="canonical" href="https://anonymousauthor-s.github.io/GuidedNav/guide/data/"><link rel="stylesheet" href="../guide.css"></head><body><header><div><a class="brand" href="https://anonymousauthor-s.github.io/GuidedNav/">GuidedNav</a><nav aria-label="Documentation"><a href="https://anonymousauthor-s.github.io/GuidedNav/">Project</a><a href="../inference/">Inference</a><a href="../training/">Training</a><a href="../data/" aria-current="page">Data</a><a href="../models/">Models</a><a href="https://github.com/anonymousauthor-s/GuidedNav/">Code ↗</a></nav></div></header><div class="layout"><aside aria-label="On this page"><div class="toc">
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Training data · GuidedNav</title><meta name="description" content="GuidedNav final evaluation model and three-stage training guide"><link rel="canonical" href="https://anonymousauthor-s.github.io/GuidedNav/guide/data/"><link rel="stylesheet" href="../guide.css"></head><body><header><div><a class="brand" href="https://anonymousauthor-s.github.io/GuidedNav/">GuidedNav</a><nav aria-label="Documentation"><a href="https://anonymousauthor-s.github.io/GuidedNav/">Project</a><a href="../inference/">Inference</a><a href="../training/">Training</a><a href="../data/" aria-current="page">Data</a><a href="../models/">Model</a><a href="https://github.com/anonymousauthor-s/GuidedNav/">Code ↗</a></nav></div></header><div class="layout"><aside aria-label="On this page"><div class="toc">
 <ul>
 <li><a href="#data-and-teacher-preparation">Data and teacher preparation</a><ul>
+<li><a href="#data-for-the-three-training-stages">Data for the three training stages</a><ul>
+<li><a href="#collect-stage-1-expert-navigation-data">Collect Stage 1 expert navigation data</a></li>
+<li><a href="#collect-stage-2-dagger-data">Collect Stage 2 DAgger data</a></li>
+<li><a href="#freeze-stage-1-and-stage-2-manifests">Freeze Stage 1 and Stage 2 manifests</a></li>
+</ul>
+</li>
+<li><a href="#released-stage-3-annotation-add-on">Released Stage 3 annotation add-on</a></li>
 <li><a href="#1-obtain-official-benchmark-assets">1. Obtain official benchmark assets</a></li>
 <li><a href="#2-match-the-addon-to-public-instructions">2. Match the addon to public instructions</a></li>
 <li><a href="#3-render-training-observations-from-collected-poses">3. Render training observations from collected poses</a></li>
@@ -11,7 +18,118 @@
 </li>
 </ul>
 </div>
-</aside><main class="paper"><div class="eyebrow">Anonymous research release · Stage 3</div><h1 id="data-and-teacher-preparation">Data and teacher preparation</h1>
+</aside><main class="paper"><div class="eyebrow">Anonymous research release</div><h1 id="data-and-teacher-preparation">Data and teacher preparation</h1>
+<h2 id="data-for-the-three-training-stages">Data for the three training stages</h2>
+<p>The <a href="../training/">training guide</a> follows the paper's three-stage setup. Prepare
+the sources below before launching training; downloading the final evaluation
+model is a separate workflow.</p>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Navigation source</th>
+<th>Visual instruction source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>R2R and English RxR expert rollouts</td>
+<td>LLaVA-Video + VSI</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Stage 1 policy rollouts relabeled by an expert (DAgger)</td>
+<td>The same frozen LLaVA-Video + VSI selection</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Annotated R2R and English RxR expert observations</td>
+<td>None</td>
+</tr>
+</tbody>
+</table>
+<p>Obtain official training episodes and scenes through <a href="https://github.com/jacobkrantz/VLN-CE#data">VLN-CE</a>
+and <a href="https://niessner.github.io/Matterport/">Matterport3D</a>. Download visual
+instruction annotations and their media from the official
+<a href="https://huggingface.co/datasets/lmms-lab/LLaVA-Video-178K">LLaVA-Video-178K</a>
+and <a href="https://huggingface.co/datasets/nyu-visionx/VSI-590K">VSI-590K</a> repositories.
+The paper uses 495,164 LLaVA-Video and 295,333 VSI examples in the VQA mixture.
+The example configuration selects those counts deterministically from your
+local input pool; it does not identify the original historical subset.</p>
+<h3 id="collect-stage-1-expert-navigation-data">Collect Stage 1 expert navigation data</h3>
+<p>In the Habitat environment, prepare training-only episode files and set
+<code>GUIDEDNAV_SCENES_DIR</code> to the official scene root. From <code>code/</code>, an R2R example is:</p>
+<pre><code class="language-bash">export GUIDEDNAV_SCENES_DIR=/absolute/path/to/data/scene_datasets
+python src/data_process/gt_following_rollout.py \
+  --dataset r2r --split train --config_path config/vln_r2r_train.yaml \
+  --data_path /absolute/path/to/r2r/train/train.json.gz \
+  --output_path ../data/expert/r2r --sim_gpu 0 \
+  --follow_to_goal --goal_stop_dist 0.5
+python src/data_process/gt_following_rollout.py \
+  --output_path ../data/expert/r2r --merge
+python src/data_process/build_vln_samples.py \
+  --dataset_dir ../data/expert/r2r --memory_size 8 --num_future_steps 4 --seed 42
+python src/data_process/build_vln_samples.py \
+  --dataset_dir ../data/expert/r2r --merge
+</code></pre>
+<p>Repeat for English RxR using <code>--dataset rxr</code>, <code>config/vln_rxr_train.yaml</code>, the
+official <code>train_guide.json.gz</code> and a separate <code>../data/expert/rxr</code> directory.
+The collectors write chronological images and recorded poses/actions; the
+sample builder writes <code>samples_perstep.jsonl</code>. The training configurations
+are distinct from the validation-evaluation configurations.</p>
+<h3 id="collect-stage-2-dagger-data">Collect Stage 2 DAgger data</h3>
+<p>Train Stage 1 first. Then roll out that policy on <strong>training episodes</strong> and
+query the expert at each visited state. The collector records both the policy's
+executed actions and the expert's counterfactual action chunks. Use separate
+physical GPUs for policy inference and simulator rendering:</p>
+<pre><code class="language-bash">python src/data_process/dagger_rollout.py \
+  --model_path /absolute/path/to/runs/stage1/stage1-epoch1 \
+  --dataset r2r_dagger --split train \
+  --habitat_config_path config/vln_r2r_train.yaml \
+  --data_path /absolute/path/to/r2r/train/train.json.gz \
+  --scenes_dir &quot;$GUIDEDNAV_SCENES_DIR&quot; \
+  --output_path ../data/dagger/r2r --model_gpu 1 --sim_gpu 0 \
+  --num_history 8 --num_future_steps 4 --num_exec 4 --seed 42 --require_stop
+python src/data_process/dagger_rollout.py --output_path ../data/dagger/r2r --merge
+python src/data_process/build_vln_samples.py \
+  --dataset_dir ../data/dagger/r2r --memory_size 8 --num_future_steps 4 \
+  --seed 42 --action_source expert_chunks
+python src/data_process/build_vln_samples.py \
+  --dataset_dir ../data/dagger/r2r --merge
+</code></pre>
+<p>Repeat with <code>--dataset rxr_dagger</code>, <code>config/vln_rxr_train.yaml</code>, the official
+RxR training guide file and a separate RxR output directory. Use <code>--rank</code> and
+<code>--world_size</code> to shard collection. Collection defaults and recovery settings
+are exposed by <code>--help</code>; retain the configuration with your generated corpus.</p>
+<p>The DAgger target must be <code>expert_chunks</code>, <strong>not the policy's executed actions</strong>.
+Freshly collected rollouts depend on your Stage 1 policy and are new data;
+their identities and counts need not match the paper's original 2.97M corpus.
+The original frozen DAgger corpus is not part of the annotation add-on.</p>
+<h3 id="freeze-stage-1-and-stage-2-manifests">Freeze Stage 1 and Stage 2 manifests</h3>
+<p>Edit <code>config/training_stage1.example.json</code> and
+<code>config/training_stage2.example.json</code> to point to your files. Paths in these
+specifications are relative to the specification file. Each navigation source
+uses <code>video_folder</code> and <code>samples_path</code>; each VQA source uses <code>annotation_path</code>
+(a JSON/JSONL path or list of globs) and <code>data_path</code> for media. VQA inputs support
+image paths, video paths or extracted video-frame directories and human/GPT
+conversation records. Keep the original media references when normalizing
+upstream annotations.</p>
+<pre><code class="language-bash">python tools/prepare_training_manifest.py \
+  --config config/training_stage1.example.json --output-dir ../training/stage1
+python tools/prepare_training_manifest.py --verify ../training/stage1/manifest.json
+python tools/prepare_training_manifest.py \
+  --config config/training_stage2.example.json --output-dir ../training/stage2
+python tools/prepare_training_manifest.py --verify ../training/stage2/manifest.json
+</code></pre>
+<p>Run Stage 2 manifest preparation after Stage 1 data preparation: the example
+reuses Stage 1's already selected VQA JSONL files. The tool freezes source
+hashes, selected indices and normalized JSONL files, and rejects role mismatches,
+invalid action labels and changed inputs. <code>--check-media all</code> checks every
+referenced media path; the default checks all selected media references. Use the resulting
+<code>../training/stage1/manifest.json</code> and <code>../training/stage2/manifest.json</code> as
+<code>TRAIN_MANIFEST</code> in the corresponding launch commands.</p>
+<h2 id="released-stage-3-annotation-add-on">Released Stage 3 annotation add-on</h2>
 <p>The complete selected Stage 3 annotation, trajectory and prompt-metadata add-on
 is available from the <a href="https://github.com/anonymousauthor-s/GuidedNav/releases/">public release</a>. From <code>code/</code>, download it with:</p>
 <pre><code class="language-bash">python tools/download_assets.py --group data
@@ -23,7 +141,7 @@ Matterport3D scenes to reconstruct the training inputs. The package supplies
 exact collected poses/actions, aligned labels/masks, frozen selection arrays and
 per-row prompt choices. RGB is rendered locally. See the <a href="https://anonymousauthor-s.github.io/GuidedNav/guide/models/">model guide</a>
 for the full weights and <a href="https://github.com/anonymousauthor-s/GuidedNav/releases/">data terms</a> for attribution and upstream conditions.</p>
-<p>The stage-3 epoch uses 157,465 R2R rows and 472,323 English RxR rows: 629,788 selected observations from 18,656 collected trajectories. This is the exact training selection, rather than the total size of Guided-R2R/Guided-RxR. The model directories are <code>navigation-base</code>, <code>stage3-initialization</code> and <code>stage3-epoch1</code>; see README.md for training and inference.</p>
+<p>The stage-3 epoch uses 157,465 R2R rows and 472,323 English RxR rows: 629,788 selected observations from 18,656 collected trajectories. This is the exact training selection, rather than the total size of Guided-R2R/Guided-RxR. For training, use your own Stage 2 model as the Stage 3 backbone; see <a href="../training/">TRAINING.md</a>. The downloaded <code>navigation-base</code> and <code>stage3-epoch1</code> directories jointly form the final paper model for evaluation.</p>
 <h2 id="1-obtain-official-benchmark-assets">1. Obtain official benchmark assets</h2>
 <p>Follow the <a href="https://github.com/jacobkrantz/VLN-CE#data">VLN-CE data setup</a> for R2R episodes and MP3D scene preparation, the <a href="https://github.com/jacobkrantz/VLN-CE#episodes-room-across-room-rxr">official RxR-Habitat data instructions in VLN-CE</a> for RxR guide episodes and ground-truth trajectories, and the <a href="https://niessner.github.io/Matterport/">Matterport3D access instructions</a> for scene assets. Download through the upstream access process; this release does not replace those permissions.</p>
 <p>For evaluation, arrange paths relative to the <strong>release root</strong>:</p>
@@ -151,9 +269,9 @@ moving or changing the training inputs.</p>
 <pre><code class="language-bash">export PYTHONPATH=&quot;$PWD/src:$PWD/third_party/vggt&quot;
 export FULL_MANIFEST=../stage3-training-data/manifest.local.json
 python tools/smoke_dataset.py --manifest &quot;$FULL_MANIFEST&quot; \
-  --processor ../weights/stage3-initialization
+  --processor /absolute/path/to/runs/stage2/stage2-epoch1
 </code></pre>
-<p>This checks positive S/O examples from both sources, image decoding, tokenizer span mapping, object-mask pooling, temporal predecessor frames, VGGT image preprocessing and collation. Run the two-update gradient smoke in README.md before a formal distributed run.</p>
+<p>This checks positive S/O examples from both sources, image decoding, tokenizer span mapping, object-mask pooling, temporal predecessor frames, VGGT image preprocessing and collation. Run the gradient smoke described in TRAINING.md before a formal distributed run.</p>
 <h2 id="annotation-schema-and-provenance">Annotation schema and provenance</h2>
 <p>Materialized action-training rows contain <code>instruction</code>, chronological relative <code>images</code> (history followed by one current frame), <code>n_memory</code>, <code>conversations</code>, <code>action_text</code>, current step <code>c</code>, <code>subtask_phase_index</code>, and <code>object_supervision</code>. The latter records <code>mask_loss_eligible</code> and <code>active_masks</code>, including mask filenames/hashes and frame identities. Public instruction IDs and original selected-row identities remain in the addon. Exact character spans and group weights come from the sidecars; do not approximate them by a different tokenizer search. The inherited R2R subtask lineage is FGR2R; the added object grounding/mask labels are automatically generated derived annotations.</p>
 <p>The data loader sanitizes legacy subtask-answer text into an action-only policy target. Ground-truth subtasks, character spans and object masks supply training losses only. They are not included in the inference prompt. The current-frame spatial-forcing weight is 0.5, temporal-difference weight 0.1, native subtask/object weights 0.01 each, with a 0.03 auxiliary warmup ratio.</p>

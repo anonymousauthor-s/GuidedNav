@@ -1,0 +1,36 @@
+{
+  "stage": 1,
+  "seed": 42,
+  "sources": [
+    {
+      "name": "r2r_expert",
+      "type": "vln_unified",
+      "role": "expert_navigation",
+      "video_folder": "../../data/expert/r2r",
+      "samples_path": "../../data/expert/r2r/samples_perstep.jsonl"
+    },
+    {
+      "name": "rxr_expert",
+      "type": "vln_unified",
+      "role": "expert_navigation",
+      "video_folder": "../../data/expert/rxr",
+      "samples_path": "../../data/expert/rxr/samples_perstep.jsonl"
+    },
+    {
+      "name": "llava_video_178k",
+      "type": "vqa",
+      "role": "visual_qa",
+      "annotation_path": "../../data/vqa/llava_video_178k/*/*processed.json",
+      "data_path": "../../data/vqa/llava_video_178k",
+      "sample_count": 495164
+    },
+    {
+      "name": "vsi_590k",
+      "type": "vqa",
+      "role": "visual_qa",
+      "annotation_path": "../../data/vqa/vsi_590k/vsi_590k.jsonl",
+      "data_path": "../../data/vqa/vsi_590k",
+      "sample_count": 295333
+    }
+  ]
+}

@@ -22,7 +22,7 @@ if [[ "$TASK" == rxr ]]; then
 fi
 case "$GUIDEDNAV_WEIGHTS_SOURCE" in
   released) python "$CODE_ROOT/tools/verify_model_identity.py" --base "$GUIDEDNAV_BASE" --checkpoint "$GUIDEDNAV_MODEL" ;;
-  trained) python "$CODE_ROOT/tools/verify_model_identity.py" --base "$GUIDEDNAV_BASE" --base-only ;;
+  trained) python "$CODE_ROOT/tools/verify_model_identity.py" --base "$GUIDEDNAV_BASE" --trained-base ;;
   *) echo 'GUIDEDNAV_WEIGHTS_SOURCE must be released or trained' >&2; exit 2 ;;
 esac
 exec python -m torch.distributed.run --nproc_per_node "${EVAL_WORKERS:-1}" \

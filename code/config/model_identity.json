@@ -26,15 +26,5 @@
       "sha256": "e91bcbe3a1c2dae12827d5405da19fa4574023a0aa722d8fefe34178d9f154b5",
       "bytes": 50352181
     }
-  },
-  "stage3-initialization": {
-    "adapter_model.safetensors": {
-      "sha256": "29bb4cee847fed1993d8b4ae0439441cee5c0563502fc0cb2637437d9726acc6",
-      "bytes": 210083584
-    },
-    "temporal_spatial_projectors.pt": {
-      "sha256": "660bd954c1f5ce3962836b25ee2f78fc1971c64f20879ec4447b1eeabab7bc04",
-      "bytes": 50352181
-    }
   }
 }

@@ -1,0 +1,34 @@
+{
+  "stage": 2,
+  "seed": 42,
+  "sources": [
+    {
+      "name": "r2r_dagger",
+      "type": "vln_unified",
+      "role": "dagger_navigation",
+      "video_folder": "../../data/dagger/r2r",
+      "samples_path": "../../data/dagger/r2r/samples_perstep.jsonl"
+    },
+    {
+      "name": "rxr_dagger",
+      "type": "vln_unified",
+      "role": "dagger_navigation",
+      "video_folder": "../../data/dagger/rxr",
+      "samples_path": "../../data/dagger/rxr/samples_perstep.jsonl"
+    },
+    {
+      "name": "llava_video_178k",
+      "type": "vqa",
+      "role": "visual_qa",
+      "annotation_path": "../../training/stage1/llava_video_178k.jsonl",
+      "data_path": "../../data/vqa/llava_video_178k"
+    },
+    {
+      "name": "vsi_590k",
+      "type": "vqa",
+      "role": "visual_qa",
+      "annotation_path": "../../training/stage1/vsi_590k.jsonl",
+      "data_path": "../../data/vqa/vsi_590k"
+    }
+  ]
+}

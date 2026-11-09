@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Download, verify and install the public GuidedNav model or Stage 3 data assets.
+"""Download, verify and install the final GuidedNav evaluation model or Stage 3 data assets.
 
 Python 3.9+ standard library only. No GitHub account or access token is needed.
 Interrupted downloads resume; rerunning verifies and reuses completed files.
@@ -15,6 +15,12 @@ import urllib.error
 import urllib.request
 
 BLOCK = 8 * 1024 * 1024
+# Only release-owned documentation/manifests can migrate from a known older release.
+# Tensor payloads and user-modified files always retain overwrite protection.
+UPGRADE_METADATA_PATHS = {
+    'weights/README.md', 'weights/WEIGHTS_MANIFEST.json', 'weights/SHA256SUMS',
+    'weights/stage3-epoch1/experiment_recipe.json',
+}
 
 
 def sha(path):
@@ -105,7 +111,16 @@ def download(row, cache):
     raise RuntimeError('Incomplete asset; rerun to resume: ' + row['name'])
 
 
-def extract(archive, root, allowed):
+def extract(archive, root, allowed, metadata_updates=None):
+    updates = {}
+    for row in metadata_updates or []:
+        name = row.get('path')
+        hashes = (row.get('previous_sha256'), row.get('new_sha256'))
+        if (name not in UPGRADE_METADATA_PATHS or name in updates or
+                any(not isinstance(h, str) or len(h) != 64 or
+                    any(c not in '0123456789abcdef' for c in h) for h in hashes)):
+            raise ValueError('Invalid release metadata migration')
+        updates[name] = row
     count = 0
     with tarfile.open(archive, 'r|gz') as tar:
         for member in tar:
@@ -127,8 +142,15 @@ def extract(archive, root, allowed):
                 if target.is_file() and target.stat().st_size == member.size and sha(target) == h.hexdigest():
                     temporary.unlink()
                 else:
-                    temporary.unlink()
-                    raise FileExistsError('Refusing to overwrite a different existing file: ' + str(target))
+                    update = updates.get(member.name)
+                    if (update is not None and target.is_file() and
+                            h.hexdigest() == update['new_sha256'] and
+                            sha(target) == update['previous_sha256']):
+                        temporary.replace(target)
+                        print('Updated known release metadata: ' + member.name, flush=True)
+                    else:
+                        temporary.unlink()
+                        raise FileExistsError('Refusing to overwrite a different existing file: ' + str(target))
             else:
                 temporary.replace(target)
             count += 1
@@ -140,6 +162,8 @@ def extract(archive, root, allowed):
 def install(manifest, group, root, keep_cache=False):
     if manifest.get('schema') != 'guidednav_downloads_v1':
         raise ValueError('Unsupported release manifest')
+    if group != 'all' and group not in manifest.get('groups', []):
+        raise ValueError('Unknown asset group: ' + group + '; use inference for the final evaluation model or data for training annotations')
     root.mkdir(parents=True, exist_ok=True)
     root = root.resolve()
     cache = destination(root, '.guidednav-downloads')
@@ -176,14 +200,14 @@ def install(manifest, group, root, keep_cache=False):
             continue
         archive = download(assets[row['asset']], cache)
         allowed = {'weights'} if row['root'] == 'weights' else {'annotations', 'data', 'prompt-metadata', 'DATA_TERMS.md'}
-        extract(archive, root, allowed)
+        extract(archive, root, allowed, row.get('metadata_updates'))
         # Keep the small archives for fast, fully verified reruns.
-    print('Done. Original scenes/instructions and the training-only VGGT teacher are obtained separately.', flush=True)
+    print('Done. The inference group installs one complete final evaluation model. Training uses outputs from the preceding stage; original scenes/instructions and the VGGT teacher are obtained separately.', flush=True)
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--group', choices=('inference', 'training', 'data', 'all'), default='inference')
+    parser.add_argument('--group', choices=('inference', 'data', 'all'), default='inference')
     parser.add_argument('--output', type=Path, default=Path(__file__).resolve().parents[2], help='Repository root, not code/')
     parser.add_argument('--manifest', type=Path, default=Path(__file__).resolve().parents[1] / 'config/download-manifest.json')
     parser.add_argument('--keep-cache', action='store_true', help='Keep transport parts after tensor reassembly')

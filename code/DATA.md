@@ -1,5 +1,116 @@
 # Data and teacher preparation
 
+## Data for the three training stages
+
+The [training guide](TRAINING.md) follows the paper's three-stage setup. Prepare
+the sources below before launching training; downloading the final evaluation
+model is a separate workflow.
+
+| Stage | Navigation source | Visual instruction source |
+| --- | --- | --- |
+| 1 | R2R and English RxR expert rollouts | LLaVA-Video + VSI |
+| 2 | Stage 1 policy rollouts relabeled by an expert (DAgger) | The same frozen LLaVA-Video + VSI selection |
+| 3 | Annotated R2R and English RxR expert observations | None |
+
+Obtain official training episodes and scenes through [VLN-CE](https://github.com/jacobkrantz/VLN-CE#data)
+and [Matterport3D](https://niessner.github.io/Matterport/). Download visual
+instruction annotations and their media from the official
+[LLaVA-Video-178K](https://huggingface.co/datasets/lmms-lab/LLaVA-Video-178K)
+and [VSI-590K](https://huggingface.co/datasets/nyu-visionx/VSI-590K) repositories.
+The paper uses 495,164 LLaVA-Video and 295,333 VSI examples in the VQA mixture.
+The example configuration selects those counts deterministically from your
+local input pool; it does not identify the original historical subset.
+
+### Collect Stage 1 expert navigation data
+
+In the Habitat environment, prepare training-only episode files and set
+`GUIDEDNAV_SCENES_DIR` to the official scene root. From `code/`, an R2R example is:
+
+```bash
+export GUIDEDNAV_SCENES_DIR=/absolute/path/to/data/scene_datasets
+python src/data_process/gt_following_rollout.py \
+  --dataset r2r --split train --config_path config/vln_r2r_train.yaml \
+  --data_path /absolute/path/to/r2r/train/train.json.gz \
+  --output_path ../data/expert/r2r --sim_gpu 0 \
+  --follow_to_goal --goal_stop_dist 0.5
+python src/data_process/gt_following_rollout.py \
+  --output_path ../data/expert/r2r --merge
+python src/data_process/build_vln_samples.py \
+  --dataset_dir ../data/expert/r2r --memory_size 8 --num_future_steps 4 --seed 42
+python src/data_process/build_vln_samples.py \
+  --dataset_dir ../data/expert/r2r --merge
+```
+
+Repeat for English RxR using `--dataset rxr`, `config/vln_rxr_train.yaml`, the
+official `train_guide.json.gz` and a separate `../data/expert/rxr` directory.
+The collectors write chronological images and recorded poses/actions; the
+sample builder writes `samples_perstep.jsonl`. The training configurations
+are distinct from the validation-evaluation configurations.
+
+### Collect Stage 2 DAgger data
+
+Train Stage 1 first. Then roll out that policy on **training episodes** and
+query the expert at each visited state. The collector records both the policy's
+executed actions and the expert's counterfactual action chunks. Use separate
+physical GPUs for policy inference and simulator rendering:
+
+```bash
+python src/data_process/dagger_rollout.py \
+  --model_path /absolute/path/to/runs/stage1/stage1-epoch1 \
+  --dataset r2r_dagger --split train \
+  --habitat_config_path config/vln_r2r_train.yaml \
+  --data_path /absolute/path/to/r2r/train/train.json.gz \
+  --scenes_dir "$GUIDEDNAV_SCENES_DIR" \
+  --output_path ../data/dagger/r2r --model_gpu 1 --sim_gpu 0 \
+  --num_history 8 --num_future_steps 4 --num_exec 4 --seed 42 --require_stop
+python src/data_process/dagger_rollout.py --output_path ../data/dagger/r2r --merge
+python src/data_process/build_vln_samples.py \
+  --dataset_dir ../data/dagger/r2r --memory_size 8 --num_future_steps 4 \
+  --seed 42 --action_source expert_chunks
+python src/data_process/build_vln_samples.py \
+  --dataset_dir ../data/dagger/r2r --merge
+```
+
+Repeat with `--dataset rxr_dagger`, `config/vln_rxr_train.yaml`, the official
+RxR training guide file and a separate RxR output directory. Use `--rank` and
+`--world_size` to shard collection. Collection defaults and recovery settings
+are exposed by `--help`; retain the configuration with your generated corpus.
+
+The DAgger target must be `expert_chunks`, **not the policy's executed actions**.
+Freshly collected rollouts depend on your Stage 1 policy and are new data;
+their identities and counts need not match the paper's original 2.97M corpus.
+The original frozen DAgger corpus is not part of the annotation add-on.
+
+### Freeze Stage 1 and Stage 2 manifests
+
+Edit `config/training_stage1.example.json` and
+`config/training_stage2.example.json` to point to your files. Paths in these
+specifications are relative to the specification file. Each navigation source
+uses `video_folder` and `samples_path`; each VQA source uses `annotation_path`
+(a JSON/JSONL path or list of globs) and `data_path` for media. VQA inputs support
+image paths, video paths or extracted video-frame directories and human/GPT
+conversation records. Keep the original media references when normalizing
+upstream annotations.
+
+```bash
+python tools/prepare_training_manifest.py \
+  --config config/training_stage1.example.json --output-dir ../training/stage1
+python tools/prepare_training_manifest.py --verify ../training/stage1/manifest.json
+python tools/prepare_training_manifest.py \
+  --config config/training_stage2.example.json --output-dir ../training/stage2
+python tools/prepare_training_manifest.py --verify ../training/stage2/manifest.json
+```
+
+Run Stage 2 manifest preparation after Stage 1 data preparation: the example
+reuses Stage 1's already selected VQA JSONL files. The tool freezes source
+hashes, selected indices and normalized JSONL files, and rejects role mismatches,
+invalid action labels and changed inputs. `--check-media all` checks every
+referenced media path; the default checks all selected media references. Use the resulting
+`../training/stage1/manifest.json` and `../training/stage2/manifest.json` as
+`TRAIN_MANIFEST` in the corresponding launch commands.
+
+## Released Stage 3 annotation add-on
+
 The complete selected Stage 3 annotation, trajectory and prompt-metadata add-on
 is available from the [public release](https://github.com/anonymousauthor-s/GuidedNav/releases/). From `code/`, download it with:
 
@@ -15,7 +126,7 @@ exact collected poses/actions, aligned labels/masks, frozen selection arrays and
 per-row prompt choices. RGB is rendered locally. See the [model guide](https://anonymousauthor-s.github.io/GuidedNav/guide/models/)
 for the full weights and [data terms](https://github.com/anonymousauthor-s/GuidedNav/releases/) for attribution and upstream conditions.
 
-The stage-3 epoch uses 157,465 R2R rows and 472,323 English RxR rows: 629,788 selected observations from 18,656 collected trajectories. This is the exact training selection, rather than the total size of Guided-R2R/Guided-RxR. The model directories are `navigation-base`, `stage3-initialization` and `stage3-epoch1`; see README.md for training and inference.
+The stage-3 epoch uses 157,465 R2R rows and 472,323 English RxR rows: 629,788 selected observations from 18,656 collected trajectories. This is the exact training selection, rather than the total size of Guided-R2R/Guided-RxR. For training, use your own Stage 2 model as the Stage 3 backbone; see [TRAINING.md](TRAINING.md). The downloaded `navigation-base` and `stage3-epoch1` directories jointly form the final paper model for evaluation.
 
 ## 1. Obtain official benchmark assets
 
@@ -138,10 +249,10 @@ In the training environment, set `FULL_MANIFEST` to the actual materialized or r
 export PYTHONPATH="$PWD/src:$PWD/third_party/vggt"
 export FULL_MANIFEST=../stage3-training-data/manifest.local.json
 python tools/smoke_dataset.py --manifest "$FULL_MANIFEST" \
-  --processor ../weights/stage3-initialization
+  --processor /absolute/path/to/runs/stage2/stage2-epoch1
 ```
 
-This checks positive S/O examples from both sources, image decoding, tokenizer span mapping, object-mask pooling, temporal predecessor frames, VGGT image preprocessing and collation. Run the two-update gradient smoke in README.md before a formal distributed run.
+This checks positive S/O examples from both sources, image decoding, tokenizer span mapping, object-mask pooling, temporal predecessor frames, VGGT image preprocessing and collation. Run the gradient smoke described in TRAINING.md before a formal distributed run.
 
 ## Annotation schema and provenance
 
