@@ -1,0 +1,11 @@
+FROM nvcr.io/nvidia/pytorch:25.11-py3
+WORKDIR /opt/guidednav
+COPY requirements-training.txt /opt/guidednav/requirements-training.txt
+# The reference run used the Torch/CUDA/FlashAttention builds inherited from
+# NVIDIA 25.11, with the application versions recorded in config/training_environment.json.
+RUN PIP_CONSTRAINT= python -m pip install --no-cache-dir -r requirements-training.txt
+COPY src /opt/guidednav/src
+COPY config /opt/guidednav/config
+COPY third_party/vggt /opt/guidednav/third_party/vggt
+ENV PYTHONPATH=/opt/guidednav/src:/opt/guidednav/third_party/vggt
+ENV TOKENIZERS_PARALLELISM=false

@@ -1,0 +1,115 @@
+{
+  "verified_on": "2026-11-09",
+  "scope": "Anonymous final-2461 code package; validation does not assert an end-to-end GPU rerun.",
+  "static": {
+    "python_files_parsed": 85,
+    "json_files_parsed": 5,
+    "bash_scripts_syntax_checked": 2,
+    "private_identifiers_scan_passed": true,
+    "reference_inference_methods_ast_identical": [
+      "_build_infer_messages",
+      "parse_actions",
+      "_generate_chunk",
+      "_run_generation"
+    ],
+    "temporal_merge_sha256_matches_registered_final_source": true
+  },
+  "training_cpu_smoke": {
+    "passed": true,
+    "imported_modules": [
+      "qwenvl.train.train_full_e6",
+      "qwenvl.data.full_vln_dataset",
+      "qwenvl.train.full_e6_trainer",
+      "qwenvl.train.native_attention",
+      "qwenvl.inference",
+      "qwenvl.reference_policy",
+      "qwenvl.infer_frames",
+      "vggt.models.vggt"
+    ],
+    "cli_help_checks": 6,
+    "history_cases": 6,
+    "identity_negative_check": true,
+    "cuda_visible": false
+  },
+  "dataset_cpu_smoke": {
+    "rows": 629788,
+    "examples": [
+      {
+        "source": "r2r",
+        "index": 113708,
+        "sequence_length": 1674,
+        "current_patch_count": 192
+      },
+      {
+        "source": "r2r",
+        "index": 141554,
+        "sequence_length": 1690,
+        "current_patch_count": 192
+      },
+      {
+        "source": "rxr",
+        "index": 106254,
+        "sequence_length": 1786,
+        "current_patch_count": 192
+      },
+      {
+        "source": "rxr",
+        "index": 295745,
+        "sequence_length": 1699,
+        "current_patch_count": 192
+      }
+    ],
+    "passed": true
+  },
+  "dataset_smoke_scope": "Read-only original final-stage sources, arrays, RGB and masks; transient manifest adjusted mtime and resolved sidecar paths only; two positive S/O samples per source; processor only, no 8B/VGGT model loaded. The anonymous exported data package is separately validated.",
+  "habitat_cpu_smoke": {
+    "passed": true,
+    "evaluator_cli_help": true,
+    "yaml_composition": [
+      "r2r",
+      "rxr"
+    ],
+    "rxr_dataset": "RxREnglishGuideVLNCE-v1",
+    "rxr_simulator": "RxRFullGeometrySim-v1",
+    "rxr_body": [
+      0.88,
+      0.18
+    ],
+    "cuda_visible": ""
+  },
+  "runtime_isolation": {
+    "training_smoke_network": "disabled",
+    "training_smoke_gpu_devices": "none exposed",
+    "loaded_model_weights": false,
+    "modified_original_source_or_data": false
+  },
+  "packaging_changes": [
+    "Private paths replaced by explicit runtime arguments/environment variables.",
+    "Legacy unused dataset registries and alternative model loaders excluded.",
+    "Original final-stage continuation/auxiliary loading retained; asynchronous cluster evaluation disabled.",
+    "Pinned tensor SHA256 identity checks added with local size/mtime cache.",
+    "Verified inference prompt/history/parser/generation methods retained verbatim.",
+    "Exact final benchmark configs relocated; full-English RxR geometry and mesh audit retained.",
+    "Pose renderer, data relocation and prerequisite checks added.",
+    "Removed cluster-specific mount aliases from legacy RGB dependency comparison; local roots compare explicitly."
+  ],
+  "not_rerun": [
+    "Full 32-GPU training or gradient updates",
+    "8B model forward/generation in the newly packaged layout",
+    "Full R2R/RxR policy benchmark",
+    "Fresh Dockerfile/environment rebuild",
+    "Complete RGB re-rendering and pixel-equivalence check",
+    "Fresh complete RxR navigation-mesh audit"
+  ],
+  "known_nonblocking_runtime_messages": [
+    "The immutable training image emits an existing dpkg version-string warning.",
+    "The pre-existing simulator environment emits Gym maintenance information."
+  ],
+  "portable_rgb_root_comparison": {
+    "passed": true,
+    "direct_helper_cases": 5,
+    "final_source_constructor_does_not_call_legacy_rgb_dependency_comparison": true,
+    "cluster_mount_path_scan_passed": true,
+    "scope": "Static and isolated CPU helper checks after the final portability edit; previous original-data decode results remain applicable because the final data path bypasses the changed legacy comparison."
+  }
+}

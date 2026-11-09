@@ -1,0 +1,40 @@
+{
+  "base-19450": {
+    "model-00001-of-00004.safetensors": {
+      "sha256": "16743895a9ac382fe5c912cd582305f328bbf8aedebea1a25ce623f30b8e08ea",
+      "bytes": 4998056552
+    },
+    "model-00002-of-00004.safetensors": {
+      "sha256": "dfd368e8a39d9321aea96f566cbf44a40eecce16f5d8a2578e085f3120cb7cd2",
+      "bytes": 4915962464
+    },
+    "model-00003-of-00004.safetensors": {
+      "sha256": "a4029258fe3869a83b9d0467d719b2c6e635c52f2ea8689f91e123128c3976f1",
+      "bytes": 4915962496
+    },
+    "model-00004-of-00004.safetensors": {
+      "sha256": "0731b9d7ee457236d3afae93d9e7cb6f2dc75847f89f482de5d06a6945d7c620",
+      "bytes": 2704357976
+    }
+  },
+  "final-2461": {
+    "adapter_model.safetensors": {
+      "sha256": "eea417c471dc6d68992f02f2721c973de0debc60ccb7e149a18335d237867e82",
+      "bytes": 210083584
+    },
+    "temporal_spatial_projectors.pt": {
+      "sha256": "e91bcbe3a1c2dae12827d5405da19fa4574023a0aa722d8fefe34178d9f154b5",
+      "bytes": 50352181
+    }
+  },
+  "initialization-6656": {
+    "adapter_model.safetensors": {
+      "sha256": "29bb4cee847fed1993d8b4ae0439441cee5c0563502fc0cb2637437d9726acc6",
+      "bytes": 210083584
+    },
+    "temporal_spatial_projectors.pt": {
+      "sha256": "660bd954c1f5ce3962836b25ee2f78fc1971c64f20879ec4447b1eeabab7bc04",
+      "bytes": 50352181
+    }
+  }
+}

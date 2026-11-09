@@ -1,0 +1,73 @@
+# @package _global_
+# Full English guide set; research RGB/action protocol, official RxR body size.
+# This is not the RxR challenge sensor/action configuration.
+defaults:
+  - /habitat: habitat_config_base
+  - /habitat/task: vln_r2r
+  - /habitat/simulator/agents@habitat.simulator.agents.main_agent: rgbd_agent
+  - /habitat/dataset/vln: mp3d_r2r
+  - /habitat/task/lab_sensors:
+    - gps_sensor
+    - compass_sensor
+  - /habitat/task/measurements@habitat.task.measurements.ndtw: ndtw
+  - _self_
+
+habitat:
+  environment:
+    max_episode_steps: 500
+    iterator_options:
+      max_scene_repeat_steps: 50000
+      shuffle: false
+  simulator:
+    type: RxRFullGeometrySim-v1
+    agents:
+      main_agent:
+        height: 0.88
+        radius: 0.18
+        sim_sensors:
+          rgb_sensor:
+            width: 640
+            height: 480
+            hfov: 79
+            position: [0.0, 1.25, 0.0]
+          depth_sensor:
+            width: 640
+            height: 480
+            hfov: 79
+            position: [0.0, 1.25, 0.0]
+            min_depth: 0.0
+            max_depth: 10.0
+    forward_step_size: 0.25
+    turn_angle: 15
+    habitat_sim_v0:
+      gpu_device_id: 0
+      allow_sliding: true
+  task:
+    measurements:
+      distance_to_goal:
+        type: DistanceToGoal
+        distance_to: POINT
+      success:
+        type: Success
+        success_distance: 3.0
+      spl:
+        type: SPL
+      path_length:
+        type: PathLength
+      steps_taken:
+        type: StepsTaken
+      oracle_success:
+        type: OracleSuccess
+      oracle_navigation_error:
+        type: OracleNavigationError
+      ndtw:
+        type: NDTW
+        gt_path: ${oc.env:RXR_EVAL_GT_PATH}
+        split: val_unseen
+        success_distance: 3.0
+        fdtw: true
+  dataset:
+    type: RxREnglishGuideVLNCE-v1
+    split: val_unseen
+    data_path: ${oc.env:RXR_EVAL_DATA_PATH}
+    scenes_dir: ${oc.env:GUIDEDNAV_SCENES_DIR}
