@@ -1,10 +1,10 @@
 # Data and teacher preparation
 
-Use the separately released frozen final-stage annotations, sample-selection arrays, object masks and agent poses to reproduce the selected training stage. Scene assets and RGB observations are separate: obtain Matterport3D access under its official terms and render the released poses locally. This source archive contains no Matterport3D scene mesh or RGB image. Availability and archive names of large data/weight artifacts are reported on the release page; source code alone is not sufficient for training.
+The frozen final-stage annotations, sample-selection arrays, object masks and agent poses have been prepared locally but are not publicly hosted yet. They contain 157,465 selected R2R rows and 472,323 selected RxR rows (629,788 total), not the full Guided-R2R/Guided-RxR datasets. A separate annotations-only release candidate is being reviewed for upstream licensing and distribution requirements. Scene assets and RGB observations are separate: obtain Matterport3D access under its official terms. Source code alone is not sufficient for training; exact final-stage reproduction also needs the frozen labels and collected poses, whose public availability must be checked on the release page.
 
 ## 1. Obtain official benchmark assets
 
-Follow the [VLN-CE data setup](https://github.com/jacobkrantz/VLN-CE#data) for R2R episodes and MP3D scene preparation, the [official RxR-Habitat instructions](https://github.com/jacobkrantz/RxR-Habitat) for RxR guide episodes and ground-truth trajectories, and the [Matterport3D access instructions](https://niessner.github.io/Matterport/) for scene assets. Download through the upstream access process; this release does not replace those permissions.
+Follow the [VLN-CE data setup](https://github.com/jacobkrantz/VLN-CE#data) for R2R episodes and MP3D scene preparation, the [official RxR-Habitat data instructions in VLN-CE](https://github.com/jacobkrantz/VLN-CE#episodes-room-across-room-rxr) for RxR guide episodes and ground-truth trajectories, and the [Matterport3D access instructions](https://niessner.github.io/Matterport/) for scene assets. Download through the upstream access process; this release does not replace those permissions.
 
 For evaluation, arrange paths relative to the **release root**:
 
