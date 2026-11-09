@@ -10,7 +10,7 @@ def main():
     args = parser.parse_args()
     names = ['torch', 'transformers', 'peft', 'accelerate', 'safetensors', 'numpy', 'Pillow']
     if args.training:
-        names += ['deepspeed', 'flash-attn']
+        names += ['deepspeed', 'flash-attn', 'av']
     versions = {}
     for name in names:
         versions[name] = importlib.metadata.version(name)

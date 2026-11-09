@@ -19,6 +19,13 @@ docker run --rm --gpus all --ipc=host --network host \
 
 The Dockerfile has not been rebuilt during packaging. Compare the check output with the recorded environment before the dataset/gradient smoke. Configure NVIDIA drivers compatible with the container's CUDA release according to NVIDIA's documentation. Distributed launch requires the same release and data paths on every node, working NCCL transport and enough memory for an 8B VLM plus frozen VGGT teacher. The launch scripts default to 32 GPUs with global batch 256; a smaller hardware configuration needs a separately validated recipe.
 
+Stages 1 and 2 also decode VQA video files. The requirements include `av==16.0.1`
+for the [Transformers 4.57.6 default PyAV video backend](https://github.com/huggingface/transformers/blob/v4.57.6/src/transformers/video_utils.py).
+This decoder pin is an environment-reconstruction choice, not a version recorded
+from the historical final-stage image. `check_environment.py --training` checks
+that the decoder distribution is installed. Pre-extracted frame directories do
+not require video-file decoding.
+
 ## Frame-policy inference
 
 The deployed frame runtime recorded Torch 2.8.0+cu128, Transformers 4.57.6, PEFT 0.17.1 and Accelerate 1.10.1. Create a separate Python 3.10/3.11 CUDA environment:

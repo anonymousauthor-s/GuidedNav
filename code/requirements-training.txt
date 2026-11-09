@@ -7,3 +7,5 @@ numpy==2.1.0
 Pillow==12.0.0
 safetensors==0.6.2
 einops
+# Transformers' video-file backend used by Stage 1/2 VQA loading.
+av==16.0.1
