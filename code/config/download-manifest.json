@@ -1,0 +1,270 @@
+{
+  "schema": "guidednav_downloads_v1",
+  "release_tag": "stage3-epoch1",
+  "assets": [
+    {
+      "name": "navigation-base-model-00001-of-00004.safetensors.part01",
+      "url": "https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/navigation-base-model-00001-of-00004.safetensors.part01",
+      "bytes": 1073741824,
+      "sha256": "6082e4fac212c244e71370c52d93003a42701d7d78b3df028ce32adf11c3e40e",
+      "groups": [
+        "inference",
+        "training"
+      ]
+    },
+    {
+      "name": "navigation-base-model-00001-of-00004.safetensors.part02",
+      "url": "https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/navigation-base-model-00001-of-00004.safetensors.part02",
+      "bytes": 1073741824,
+      "sha256": "adba6087127f9c2972b3ed43e91d0ff1e18207ca0da844e79433058de0b6c095",
+      "groups": [
+        "inference",
+        "training"
+      ]
+    },
+    {
+      "name": "navigation-base-model-00001-of-00004.safetensors.part03",
+      "url": "https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/navigation-base-model-00001-of-00004.safetensors.part03",
+      "bytes": 1073741824,
+      "sha256": "7cfa1f0a8ac724e9636eaeedc8513bde575903413eade1642ea45e611fac9f9b",
+      "groups": [
+        "inference",
+        "training"
+      ]
+    },
+    {
+      "name": "navigation-base-model-00001-of-00004.safetensors.part04",
+      "url": "https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/navigation-base-model-00001-of-00004.safetensors.part04",
+      "bytes": 1073741824,
+      "sha256": "0f4483209f32a9914bcdf757886467ac5f7b26ec95af35062e712b4ca4bc1f24",
+      "groups": [
+        "inference",
+        "training"
+      ]
+    },
+    {
+      "name": "navigation-base-model-00001-of-00004.safetensors.part05",
+      "url": "https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/navigation-base-model-00001-of-00004.safetensors.part05",
+      "bytes": 703089256,
+      "sha256": "04bebfe4ed744e59ab28ca46e4207b3ca33cbfbaffcb09e6da729d589922f831",
+      "groups": [
+        "inference",
+        "training"
+      ]
+    },
+    {
+      "name": "navigation-base-model-00002-of-00004.safetensors.part01",
+      "url": "https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/navigation-base-model-00002-of-00004.safetensors.part01",
+      "bytes": 1073741824,
+      "sha256": "98c275b68e366e2aad79cd1ecdac53b05383d5187f18ecc8afdd6bd6532ab9cb",
+      "groups": [
+        "inference",
+        "training"
+      ]
+    },
+    {
+      "name": "navigation-base-model-00002-of-00004.safetensors.part02",
+      "url": "https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/navigation-base-model-00002-of-00004.safetensors.part02",
+      "bytes": 1073741824,
+      "sha256": "d818434376a550b0905e81628dcaed05d4662e54a9b23cb14f04756d719a9cb7",
+      "groups": [
+        "inference",
+        "training"
+      ]
+    },
+    {
+      "name": "navigation-base-model-00002-of-00004.safetensors.part03",
+      "url": "https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/navigation-base-model-00002-of-00004.safetensors.part03",
+      "bytes": 1073741824,
+      "sha256": "5a200a7edbf09849515f5f46054f080c426bd836bf64f5f0a16ee082ccca6194",
+      "groups": [
+        "inference",
+        "training"
+      ]
+    },
+    {
+      "name": "navigation-base-model-00002-of-00004.safetensors.part04",
+      "url": "https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/navigation-base-model-00002-of-00004.safetensors.part04",
+      "bytes": 1073741824,
+      "sha256": "4f0d1f7e348147f9ea396e36694f23d1cd998efb574529caba0e03e030ccbfb1",
+      "groups": [
+        "inference",
+        "training"
+      ]
+    },
+    {
+      "name": "navigation-base-model-00002-of-00004.safetensors.part05",
+      "url": "https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/navigation-base-model-00002-of-00004.safetensors.part05",
+      "bytes": 620995168,
+      "sha256": "1ca6cbd852e62a8a892d2bec262923c925ed1db2a8bbe8654206c7443acccc10",
+      "groups": [
+        "inference",
+        "training"
+      ]
+    },
+    {
+      "name": "navigation-base-model-00003-of-00004.safetensors.part01",
+      "url": "https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/navigation-base-model-00003-of-00004.safetensors.part01",
+      "bytes": 1073741824,
+      "sha256": "d9425054305d1446bbfbc5d8e04a2053c3c9e0a10c8bcb584d09e1efff19d167",
+      "groups": [
+        "inference",
+        "training"
+      ]
+    },
+    {
+      "name": "navigation-base-model-00003-of-00004.safetensors.part02",
+      "url": "https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/navigation-base-model-00003-of-00004.safetensors.part02",
+      "bytes": 1073741824,
+      "sha256": "26cb15450ba8145bcad262dfbc4f7d44f1980f7b33f286be96d94635e60753eb",
+      "groups": [
+        "inference",
+        "training"
+      ]
+    },
+    {
+      "name": "navigation-base-model-00003-of-00004.safetensors.part03",
+      "url": "https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/navigation-base-model-00003-of-00004.safetensors.part03",
+      "bytes": 1073741824,
+      "sha256": "0a9968d9169a799836bd4ace484e2b49b1ae191b32216fd9d2c08ab8d9139181",
+      "groups": [
+        "inference",
+        "training"
+      ]
+    },
+    {
+      "name": "navigation-base-model-00003-of-00004.safetensors.part04",
+      "url": "https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/navigation-base-model-00003-of-00004.safetensors.part04",
+      "bytes": 1073741824,
+      "sha256": "a9fb9afdc4912ffb2d628be3d1e9cf94096fee377ad19a3d598edeace85c1ca0",
+      "groups": [
+        "inference",
+        "training"
+      ]
+    },
+    {
+      "name": "navigation-base-model-00003-of-00004.safetensors.part05",
+      "url": "https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/navigation-base-model-00003-of-00004.safetensors.part05",
+      "bytes": 620995200,
+      "sha256": "67eb5ddc6d83cc41c47eaddeeead3e21cf16fa15298603cd4d0a8e4412833931",
+      "groups": [
+        "inference",
+        "training"
+      ]
+    },
+    {
+      "name": "navigation-base-model-00004-of-00004.safetensors.part01",
+      "url": "https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/navigation-base-model-00004-of-00004.safetensors.part01",
+      "bytes": 1073741824,
+      "sha256": "4e2262a998c5e4459912fd0115546f2a37edca6727db499b856a9fbe369e1169",
+      "groups": [
+        "inference",
+        "training"
+      ]
+    },
+    {
+      "name": "navigation-base-model-00004-of-00004.safetensors.part02",
+      "url": "https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/navigation-base-model-00004-of-00004.safetensors.part02",
+      "bytes": 1073741824,
+      "sha256": "abfeb614c41130c7f28d0f1b0d1ac189354e8055f18a85ea185802b665895d77",
+      "groups": [
+        "inference",
+        "training"
+      ]
+    },
+    {
+      "name": "navigation-base-model-00004-of-00004.safetensors.part03",
+      "url": "https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/navigation-base-model-00004-of-00004.safetensors.part03",
+      "bytes": 556874328,
+      "sha256": "ad51472f60815546f7011e630fca6a52bf37d00f08e854248d8b688ada7c689d",
+      "groups": [
+        "inference",
+        "training"
+      ]
+    },
+    {
+      "name": "guidednav-model-support.tar.gz",
+      "url": "https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/guidednav-model-support.tar.gz",
+      "bytes": 431138108,
+      "sha256": "4b8db1eaad33c514f80af687a8252c581928ce6d93283700461ebd77b1ee41c4",
+      "groups": [
+        "inference",
+        "training"
+      ]
+    },
+    {
+      "name": "guidednav-stage3-data-addon.tar.gz",
+      "url": "https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/guidednav-stage3-data-addon.tar.gz",
+      "bytes": 479510307,
+      "sha256": "e100778f32199d0b07ae5fa804033d3f5cb1c6d675d8b159444bd76fb8374130",
+      "groups": [
+        "data"
+      ]
+    }
+  ],
+  "files": [
+    {
+      "path": "weights/navigation-base/model-00001-of-00004.safetensors",
+      "parts": [
+        "navigation-base-model-00001-of-00004.safetensors.part01",
+        "navigation-base-model-00001-of-00004.safetensors.part02",
+        "navigation-base-model-00001-of-00004.safetensors.part03",
+        "navigation-base-model-00001-of-00004.safetensors.part04",
+        "navigation-base-model-00001-of-00004.safetensors.part05"
+      ],
+      "bytes": 4998056552,
+      "sha256": "16743895a9ac382fe5c912cd582305f328bbf8aedebea1a25ce623f30b8e08ea"
+    },
+    {
+      "path": "weights/navigation-base/model-00002-of-00004.safetensors",
+      "parts": [
+        "navigation-base-model-00002-of-00004.safetensors.part01",
+        "navigation-base-model-00002-of-00004.safetensors.part02",
+        "navigation-base-model-00002-of-00004.safetensors.part03",
+        "navigation-base-model-00002-of-00004.safetensors.part04",
+        "navigation-base-model-00002-of-00004.safetensors.part05"
+      ],
+      "bytes": 4915962464,
+      "sha256": "dfd368e8a39d9321aea96f566cbf44a40eecce16f5d8a2578e085f3120cb7cd2"
+    },
+    {
+      "path": "weights/navigation-base/model-00003-of-00004.safetensors",
+      "parts": [
+        "navigation-base-model-00003-of-00004.safetensors.part01",
+        "navigation-base-model-00003-of-00004.safetensors.part02",
+        "navigation-base-model-00003-of-00004.safetensors.part03",
+        "navigation-base-model-00003-of-00004.safetensors.part04",
+        "navigation-base-model-00003-of-00004.safetensors.part05"
+      ],
+      "bytes": 4915962496,
+      "sha256": "a4029258fe3869a83b9d0467d719b2c6e635c52f2ea8689f91e123128c3976f1"
+    },
+    {
+      "path": "weights/navigation-base/model-00004-of-00004.safetensors",
+      "parts": [
+        "navigation-base-model-00004-of-00004.safetensors.part01",
+        "navigation-base-model-00004-of-00004.safetensors.part02",
+        "navigation-base-model-00004-of-00004.safetensors.part03"
+      ],
+      "bytes": 2704357976,
+      "sha256": "0731b9d7ee457236d3afae93d9e7cb6f2dc75847f89f482de5d06a6945d7c620"
+    }
+  ],
+  "archives": [
+    {
+      "asset": "guidednav-model-support.tar.gz",
+      "root": "weights"
+    },
+    {
+      "asset": "guidednav-stage3-data-addon.tar.gz",
+      "root": "multiple"
+    }
+  ],
+  "groups": [
+    "inference",
+    "training",
+    "data"
+  ],
+  "data_scope": "Complete selected Stage 3 training inputs; not the entire Guided annotation corpus",
+  "scene_and_instruction_access": "Obtain original assets from official sources under their terms."
+}

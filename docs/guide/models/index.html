@@ -1,0 +1,92 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Model downloads · GuidedNav</title><meta name="description" content="GuidedNav anonymous model, data and reproduction guide"><link rel="canonical" href="https://anonymousauthor-s.github.io/GuidedNav/guide/models/"><link rel="stylesheet" href="../guide.css"></head><body><header><div><a class="brand" href="https://anonymousauthor-s.github.io/GuidedNav/">GuidedNav</a><nav aria-label="Documentation"><a href="https://anonymousauthor-s.github.io/GuidedNav/">Project</a><a href="../inference/">Inference</a><a href="../training/">Training</a><a href="../data/">Data</a><a href="../models/" aria-current="page">Models</a><a href="https://github.com/anonymousauthor-s/GuidedNav/">Code ↗</a></nav></div></header><div class="layout"><aside aria-label="On this page"><div class="toc">
+<ul>
+<li><a href="#model-downloads">Model downloads</a><ul>
+<li><a href="#download-and-install">Download and install</a></li>
+<li><a href="#what-does-1660-gib-mean">What does 16.60 GiB mean?</a></li>
+<li><a href="#training-data">Training data</a></li>
+<li><a href="#manual-downloads-and-integrity">Manual downloads and integrity</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</aside><main class="paper"><p role="status" style="padding:14px;background:#fff5d8;border-radius:8px"><strong>Upload in progress.</strong> Model and data download links will become active after all files pass the public-download checks.</p><div class="eyebrow">Anonymous research release · Stage 3</div><h1 id="model-downloads">Model downloads</h1>
+<p>The full navigation model and both Stage 3 adapters are being uploaded to the
+<a href="https://github.com/anonymousauthor-s/GuidedNav/releases/tag/stage3-epoch1">public release</a>. No account or access token is required.</p>
+<h2 id="download-and-install">Download and install</h2>
+<p>Clone the code, then run the standard-library downloader with Python 3.9 or later:</p>
+<pre><code class="language-bash">git clone https://github.com/anonymousauthor-s/GuidedNav.git
+cd GuidedNav/code
+python tools/download_assets.py --group inference
+</code></pre>
+<p>The tool resumes interrupted downloads, verifies every asset with SHA256,
+reassembles the original tensor files, and installs the weights at the repository
+root. Rerun the same command after an interruption. Reserve about <strong>24 GiB of free
+disk space</strong> for model installation, including temporary transport parts.</p>
+<table>
+<thead>
+<tr>
+<th>Directory</th>
+<th>Contents</th>
+<th>Required for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>weights/navigation-base/</code></td>
+<td>Full BF16 navigation-pretrained vision-language backbone and processor</td>
+<td>Inference and training</td>
+</tr>
+<tr>
+<td><code>weights/stage3-epoch1/</code></td>
+<td>Final Stage 3, epoch 1 LoRA adapter, temporal gate, auxiliary projections and processor</td>
+<td>Reported policy</td>
+</tr>
+<tr>
+<td><code>weights/stage3-initialization/</code></td>
+<td>Initialization adapter, auxiliary weights and processor</td>
+<td>Stage 3 training</td>
+</tr>
+</tbody>
+</table>
+<p>The model download includes all three directories. The initialization is a small
+extra included in the shared support archive; inference loads only the navigation
+base and final epoch. <code>--group training</code> downloads the same model files.</p>
+<h2 id="what-does-1660-gib-mean">What does 16.60 GiB mean?</h2>
+<p><strong>16.60 GiB is the full inference model</strong>, including the navigation backbone and
+final adapter/auxiliary weights. It includes the vision encoder and language
+model in BF16. It is not a quantized model or an adapter-only download. Including
+the training initialization brings the installed model payloads to <strong>16.86 GiB</strong>.
+Archive compression and transport splitting can make download sizes differ.</p>
+<p>Use the supplied navigation-pretrained backbone with its matching adapter.
+An unmodified Qwen3-VL model cannot replace that backbone. The frozen VGGT teacher
+is needed only for training and is downloaded separately in the <a href="../data/">data guide</a>.</p>
+<h2 id="training-data">Training data</h2>
+<pre><code class="language-bash">python tools/download_assets.py --group data
+</code></pre>
+<p>This installs the <strong>complete frozen Stage 3 selection</strong>: 629,788 annotated rows,
+379,428 masks, 18,656 collected trajectories/actions and exact prompt-choice
+metadata. It is a roughly <strong>459 MiB</strong> compressed add-on, rather than the full
+Guided-R2R/Guided-RxR annotation corpus. Original instructions and licensed scenes
+are obtained from upstream. Follow the <a href="../data/">data guide</a> to reconstruct text,
+render RGB and prepare training records. Allow additional disk space for the
+extracted labels and rendered observations.</p>
+<p>To fetch models and the add-on together:</p>
+<pre><code class="language-bash">python tools/download_assets.py --group all
+</code></pre>
+<h2 id="manual-downloads-and-integrity">Manual downloads and integrity</h2>
+<p>The <a href="https://github.com/anonymousauthor-s/GuidedNav/releases/tag/stage3-epoch1">release assets</a> include the model-support archive, data add-on,
+18 transport parts for the four original backbone tensor files, a download
+manifest, and SHA256SUMS. Use the downloader for automatic ordered reassembly.
+The assembled tensor files are byte-identical to the exported navigation model.</p>
+<ul>
+<li><a href="https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/guidednav-stage3-data-addon.tar.gz">Data add-on</a></li>
+<li><a href="https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/download-manifest.json">Download manifest</a></li>
+<li><a href="https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/SHA256SUMS">SHA256 checksums</a></li>
+<li><a href="https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/MODEL_TERMS.md">Model terms and attribution</a></li>
+<li><a href="https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/DATA_TERMS.md">Data terms and attribution</a></li>
+</ul>
+<p>The navigation adaptations and added supervision are shared for non-commercial
+research, subject to the listed upstream terms. Original Qwen Apache-2.0 rights
+and original benchmark rights remain unchanged. Matterport3D scenes must be
+obtained through the official access process.</p>
+<p>Continue with <a href="../inference/">inference</a> or <a href="../training/">Stage 3 training</a>.</p><footer>GuidedNav · Anonymous Authors · Research artifacts and reproduction guide</footer></main></div></body></html>

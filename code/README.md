@@ -1,27 +1,39 @@
 # GuidedNav · Code
 
+> **Upload in progress.** Model and data download links will become active after all files pass the public-download checks.
+
+
 [Project page](https://anonymousauthor-s.github.io/GuidedNav/) · [Inference](#inference) · [Training](#stage-3-training) · [Data](#training-data) · [Models](#models-and-directory-layout) · [Evaluation](#habitat-evaluation)
 
 This directory contains frame-policy inference, R2R-CE/RxR-CE evaluation, and **Stage 3 guidance fine-tuning for one epoch**. It starts from navigation-pretrained weights and a supplied Stage 3 initialization. Reconstructing the earlier training stages is outside this package's scope.
 
 ## Models and directory layout
 
-**Weights and the complete annotation, trajectory, and prompt-metadata add-on are pending release.** Check the repository's [model-download status](../README.md#model-downloads) for availability. The commands below assume those assets have been obtained.
+The complete model bundle and selected Stage 3 data add-on are being uploaded to the [public release](https://github.com/anonymousauthor-s/GuidedNav/releases/tag/stage3-epoch1). See the [download guide](https://anonymousauthor-s.github.io/GuidedNav/guide/models/) or run from `code/`:
+
+```bash
+python tools/download_assets.py --group inference
+```
 
 ```text
 GuidedNav/
-├── code/                               # this directory
+├── code/                              # inference, training and evaluation
 ├── weights/
-│   ├── navigation-base/                # navigation-pretrained backbone
-│   ├── stage3-initialization/          # initialization adapter and auxiliary weights
-│   └── stage3-epoch1/                  # reported one-epoch adapter and auxiliary weights
+│   ├── navigation-base/               # full navigation-pretrained backbone
+│   ├── stage3-initialization/         # Stage 3 initialization
+│   └── stage3-epoch1/                 # reported final adapter and auxiliary weights
+├── annotations/                      # frozen labels, masks and selection arrays
+├── prompt-metadata/                  # exact per-row prompt choices
 ├── data/
-│   ├── manifest.json                   # frozen Stage 3 sample selection
-│   ├── r2r/                            # labels, masks, arrays, trajectories, and rendered RGB
-│   ├── rxr/
-│   ├── datasets/                       # official evaluation episodes and ground truth
-│   └── scene_datasets/                 # licensed scene assets
-└── assets/vggt/vggt.pt                 # frozen training teacher
+│   ├── pose-manifest.json            # hashes of collected trajectories
+│   ├── r2r/traj/                     # released poses and actions
+│   ├── rxr/traj/
+│   ├── r2r/rgb/                      # locally rendered observations
+│   ├── rxr/rgb/
+│   ├── datasets/                     # official benchmark episodes
+│   └── scene_datasets/               # licensed scenes from upstream
+├── stage3-training-data/             # locally materialized training records
+└── assets/vggt/vggt.pt               # separately obtained training teacher
 ```
 
 Both adapters require `navigation-base`; neither is a standalone 8B model. Keep each adapter's auxiliary weights, processor, and recipe together. The inference bundle is approximately **16.60 GiB**, including the full BF16 navigation VLM, adapter, and learned auxiliary weights with the temporal gate. Including the Stage 3 initialization gives approximately **16.86 GiB** of model assets. A vanilla Qwen checkpoint does not replace the navigation-pretrained backbone. The VGGT teacher and training annotations are not needed at inference and are separate from these model-size totals.
@@ -29,6 +41,8 @@ Both adapters require `navigation-base`; neither is a standalone 8B model. Keep 
 All commands below run from `code/`. Use the separate environments in [ENVIRONMENT.md](ENVIRONMENT.md): frame inference, Stage 3 training, and Habitat rendering/evaluation have different dependencies.
 
 ## Inference
+
+Download the model first with `python tools/download_assets.py --group inference`.
 
 ### 1. Set up the frame-policy environment
 
@@ -105,7 +119,7 @@ Follow [DATA.md](DATA.md) to obtain the official benchmark assets, prepare the c
 
 This stage adds no DAgger or VQA rows. Earlier navigation training is carried by the pretrained assets.
 
-The complete annotation, trajectory, and prompt-metadata add-on is pending release. Combine this add-on with official instructions and licensed scenes to reconstruct the Stage 3 training data: it supplies step-aligned labels, exact selected rows, recorded poses/actions, and prompt metadata. RGB can be rendered from the recorded poses. Preserve the frozen sample selection and frame correspondence when preparing the data.
+Download the complete selected Stage 3 add-on with `python tools/download_assets.py --group data`. Combine it with official instructions and licensed scenes to reconstruct the Stage 3 training data: it supplies step-aligned labels, exact selected rows, recorded poses/actions, and prompt metadata. RGB can be rendered from the recorded poses. Preserve the frozen sample selection and frame correspondence when preparing the data.
 
 After preparing a relocated manifest, check example decoding and collation in the **training environment** before launching a distributed run:
 

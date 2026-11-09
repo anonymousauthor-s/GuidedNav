@@ -1,0 +1,174 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Training data · GuidedNav</title><meta name="description" content="GuidedNav anonymous model, data and reproduction guide"><link rel="canonical" href="https://anonymousauthor-s.github.io/GuidedNav/guide/data/"><link rel="stylesheet" href="../guide.css"></head><body><header><div><a class="brand" href="https://anonymousauthor-s.github.io/GuidedNav/">GuidedNav</a><nav aria-label="Documentation"><a href="https://anonymousauthor-s.github.io/GuidedNav/">Project</a><a href="../inference/">Inference</a><a href="../training/">Training</a><a href="../data/" aria-current="page">Data</a><a href="../models/">Models</a><a href="https://github.com/anonymousauthor-s/GuidedNav/">Code ↗</a></nav></div></header><div class="layout"><aside aria-label="On this page"><div class="toc">
+<ul>
+<li><a href="#data-and-teacher-preparation">Data and teacher preparation</a><ul>
+<li><a href="#1-obtain-official-benchmark-assets">1. Obtain official benchmark assets</a></li>
+<li><a href="#2-match-the-addon-to-public-instructions">2. Match the addon to public instructions</a></li>
+<li><a href="#3-render-training-observations-from-collected-poses">3. Render training observations from collected poses</a></li>
+<li><a href="#4-verify-and-relocate-frozen-training-data">4. Verify and relocate frozen training data</a></li>
+<li><a href="#annotation-schema-and-provenance">Annotation schema and provenance</a></li>
+<li><a href="#5-obtain-the-exact-training-teacher">5. Obtain the exact training teacher</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</aside><main class="paper"><p role="status" style="padding:14px;background:#fff5d8;border-radius:8px"><strong>Upload in progress.</strong> Model and data download links will become active after all files pass the public-download checks.</p><div class="eyebrow">Anonymous research release · Stage 3</div><h1 id="data-and-teacher-preparation">Data and teacher preparation</h1>
+<p>The complete selected Stage 3 annotation, trajectory and prompt-metadata add-on
+is being uploaded to the <a href="https://github.com/anonymousauthor-s/GuidedNav/releases/tag/stage3-epoch1">public release</a>. From <code>code/</code>, download it with:</p>
+<pre><code class="language-bash">python tools/download_assets.py --group data
+</code></pre>
+<p>It installs <code>annotations/</code>, <code>data/r2r/traj/</code>, <code>data/rxr/traj/</code>,
+<code>data/pose-manifest.json</code> and <code>prompt-metadata/</code> at the repository root.
+Combine these files with official benchmark instructions and licensed
+Matterport3D scenes to reconstruct the training inputs. The package supplies
+exact collected poses/actions, aligned labels/masks, frozen selection arrays and
+per-row prompt choices. RGB is rendered locally. See the <a href="https://anonymousauthor-s.github.io/GuidedNav/guide/models/">model guide</a>
+for the full weights and <a href="https://github.com/anonymousauthor-s/GuidedNav/releases/tag/stage3-epoch1">data terms</a> for attribution and upstream conditions.</p>
+<p>The stage-3 epoch uses 157,465 R2R rows and 472,323 English RxR rows: 629,788 selected observations from 18,656 collected trajectories. This is the exact training selection, rather than the total size of Guided-R2R/Guided-RxR. The model directories are <code>navigation-base</code>, <code>stage3-initialization</code> and <code>stage3-epoch1</code>; see README.md for training and inference.</p>
+<h2 id="1-obtain-official-benchmark-assets">1. Obtain official benchmark assets</h2>
+<p>Follow the <a href="https://github.com/jacobkrantz/VLN-CE#data">VLN-CE data setup</a> for R2R episodes and MP3D scene preparation, the <a href="https://github.com/jacobkrantz/VLN-CE#episodes-room-across-room-rxr">official RxR-Habitat data instructions in VLN-CE</a> for RxR guide episodes and ground-truth trajectories, and the <a href="https://niessner.github.io/Matterport/">Matterport3D access instructions</a> for scene assets. Download through the upstream access process; this release does not replace those permissions.</p>
+<p>For evaluation, arrange paths relative to the <strong>release root</strong>:</p>
+<pre><code class="language-text">data/scene_datasets/mp3d/&lt;scan&gt;/&lt;scan&gt;.glb
+data/datasets/r2r/val_unseen/val_unseen.json.gz
+data/datasets/rxr/val_unseen/val_unseen_guide.json.gz
+data/datasets/rxr/val_unseen/val_unseen_guide_gt.json.gz
+</code></pre>
+<p>Keep the matching dataset/ground-truth files from the same upstream release. The evaluator's Habitat extensions register RxR trajectory metrics before configuration loading. Habitat environment settings are in <code>config/vln_r2r.yaml</code> and <code>config/vln_rxr.yaml</code>: RGB 640×480, horizontal FOV 79°, forward action 0.25 m, turn action 15°, maximum 500 steps. The camera uses Habitat 0.2.4's default position <code>[0,1.25,0]</code> metres and zero relative rotation; these defaults are also explicit in the pose renderer. See the <a href="https://github.com/facebookresearch/habitat-lab/blob/v0.2.4/habitat-lab/habitat/config/default_structured_configs.py">upstream sensor definitions</a>.</p>
+<p>The final RxR evaluation uses <code>RxREnglishGuideVLNCE-v1</code>, retaining all 1223 en-US and 2446 en-IN guide episodes (3669 total). Its simulator is <code>RxRFullGeometrySim-v1</code>, collision height 0.88 m and radius 0.18 m, with sliding enabled. The research RGB/action protocol differs from the RxR challenge configuration. Rebuild and audit its explicitly pinned navigation meshes without modifying the original scenes:</p>
+<pre><code class="language-bash">python tools/build_rxr_navmesh.py \
+  --dataset ../data/datasets/rxr/val_unseen/val_unseen_guide.json.gz \
+  --gt ../data/datasets/rxr/val_unseen/val_unseen_guide_gt.json.gz \
+  --scenes-root ../data/scene_datasets --output ../data/rxr_navmesh
+</code></pre>
+<p>This CPU geometry tool creates a renderer-free simulator, applies default <code>NavMeshSettings</code> with height/radius 0.88/0.18, saves each scene's new mesh, and checks finite start-to-goal reachability plus valid reference trajectories for every English episode. It requires the exact benchmark data SHA256 <code>93abddce58e8232867a8738daa8107eb82953693a9d5e70779d1eb00386b222a</code> and GT SHA256 <code>bdfbb624132501bf297eb0ea16a99e38682668ba5e9ce1554ca5cdcde6b65a0d</code>. A different or recompressed file must be reconciled with the original benchmark payload before claiming the same protocol. <code>audit.json</code> and <code>*.navmesh</code> stay together; the evaluator verifies each mesh hash and agent dimensions. <code>scripts/evaluate.sh rxr</code> sets the audit/dataset/GT environment paths automatically. Override <code>RXR_NAVMESH_AUDIT_PATH</code>, <code>RXR_EVAL_DATA_PATH</code>, <code>RXR_EVAL_GT_PATH</code> and <code>GUIDEDNAV_SCENES_DIR</code> when using a different local layout.</p>
+<h2 id="2-match-the-addon-to-public-instructions">2. Match the addon to public instructions</h2>
+<p>The correspondence is explicit and has been checked across the <strong>entire stage-3 selection</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th style="text-align: right;">Selected rows</th>
+<th style="text-align: right;">Unique instructions</th>
+<th style="text-align: right;">Exact upstream matches</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R2R</td>
+<td style="text-align: right;">157,465</td>
+<td style="text-align: right;">10,703</td>
+<td style="text-align: right;">10,703 / 10,703</td>
+</tr>
+<tr>
+<td>English RxR</td>
+<td style="text-align: right;">472,323</td>
+<td style="text-align: right;">7,953</td>
+<td style="text-align: right;">7,953 / 7,953</td>
+</tr>
+</tbody>
+</table>
+<p>R2R joins <code>fgr_path_id</code> to the public FGR2R <code>path_id</code>, then identifies the original instruction by its exact UTF-8 SHA256. The processed <code>ins_id</code> is <strong>not</strong> assumed to be the index among the original three instructions. RxR joins the original <code>rxr_instruction_id</code>, again checking the exact text hash. No whitespace normalization is applied; trailing spaces matter. The video identity and zero-based frame <code>c</code> connect labels and masks to the corresponding collected agent pose. Character spans are zero-based, half-open Unicode character bounds, not tokenizer offsets; <code>[-1,-1]</code> denotes unavailable span supervision.</p>
+<p>Obtain <code>FGR2R_train.json</code> from the <a href="https://github.com/YicongHong/Fine-Grained-R2R/tree/master/data">official FGR2R data directory</a> and <code>rxr_train_guide.jsonl.gz</code> using the <a href="https://github.com/google-research-datasets/RxR#downloading-guide-annotations">official RxR guide-annotation instructions</a>. The verified public payload SHA256 values are:</p>
+<pre><code class="language-text">FGR2R_train.json           703837ee87a14d1b1fcb7d5bd6ce261faacc82e0d911a16396792cfa53d54fbc
+rxr_train_guide.jsonl.gz   b28b374b6e3203874f8bf65293df102b698efd51109e7e81a0e86fe3e3f780f2
+</code></pre>
+<p>With the addon extracted locally, verify all pointers without downloading any data inside the tool:</p>
+<pre><code class="language-bash">python tools/verify_annotation_alignment.py \
+  --annotations ../annotations \
+  --r2r-source /path/to/FGR2R_train.json \
+  --rxr-source /path/to/rxr_train_guide.jsonl.gz \
+  --report ./alignment-report.json
+</code></pre>
+<p>The complete addon needs the following information. It does not need to duplicate full upstream instructions or scene imagery:</p>
+<table>
+<thead>
+<tr>
+<th>Information</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Public instruction ID/hash, video/frame identity</td>
+<td>Recover the correct original text and observation index</td>
+</tr>
+<tr>
+<td>Exact collected agent poses and actions, with per-file hashes</td>
+<td>Render the original observation sequence and recover the four-action targets</td>
+</tr>
+<tr>
+<td>Masks, character spans, phases, groups, weights and eligibility</td>
+<td>Preserve the added supervision</td>
+</tr>
+<tr>
+<td>Frozen selected <code>source_indices</code></td>
+<td>Preserve the exact stage-3 examples and their order</td>
+</tr>
+<tr>
+<td>Per-row <code>conjunction_id</code> and its fixed seven-string vocabulary</td>
+<td>Reproduce the original action prompt without drawing a new random choice</td>
+</tr>
+<tr>
+<td>Renderer/sensor and sample-building settings</td>
+<td>Preserve camera geometry, history sampling and action indexing</td>
+</tr>
+</tbody>
+</table>
+<p>The conjunction IDs require one byte per selected row, plus small headers. The current action-training loader does not use stored waypoint coordinates or distances as targets. It consumes the recovered instruction, image/history paths, action-only conversation and the S/O supervision. Legacy subtask-answer text is removed before training, so its original string does not have to be redistributed.</p>
+<p><code>tools/materialize_annotation_addon.py</code> reconstructs these loader records from the public text and the complete addon. It never reruns an expert follower, resamples examples or regenerates labels:</p>
+<pre><code class="language-bash">python tools/materialize_annotation_addon.py \
+  --annotations ../annotations \
+  --r2r-source /path/to/FGR2R_train.json \
+  --rxr-source /path/to/rxr_train_guide.jsonl.gz \
+  --trajectories ../data --pose-manifest ../data/pose-manifest.json \
+  --prompt-metadata ../prompt-metadata \
+  --r2r-rgb ../data/r2r/rgb --rxr-rgb ../data/rxr/rgb \
+  --output ../stage3-training-data
+</code></pre>
+<p>The output is a new local <code>manifest.local.json</code> and compatible JSONL/array files; it does not alter the input artifacts. Full-selection verification matched the original action labels, history-frame paths, normalized action prompts and mask pointers for all 629,788 observations. This verifies data correspondence and input reconstruction, rather than a new GPU training run or a byte-identical RGB-rendering result.</p>
+<h2 id="3-render-training-observations-from-collected-poses">3. Render training observations from collected poses</h2>
+<p>The add-on provides the original per-video collected positions, rotations and actions in NPZ files. Unused scene semantics and reference-path fields are omitted. The files store world-space <strong>agent</strong> positions and rotations in <strong>w,x,y,z</strong> order, with one pose per observation, as well as the recorded discrete actions. Their filenames match the video basename in each annotated row. All 18,656 selected trajectories were checked against the training observation/action indices. <code>tools/render_training_rgb.py</code> converts to Habitat's x,y,z,w coefficients and reapplies the camera offset once. It does not rerun a shortest-path follower or sample a different trajectory.</p>
+<p>In the simulator environment, from <code>code/</code>:</p>
+<pre><code class="language-bash">python tools/render_training_rgb.py \
+  --trajectories ../data/r2r/traj \
+  --scenes-root ../data/scene_datasets \
+  --output ../data/r2r/rgb
+python tools/render_training_rgb.py \
+  --trajectories ../data/rxr/traj \
+  --scenes-root ../data/scene_datasets \
+  --output ../data/rxr/rgb
+</code></pre>
+<p>Use <code>--rank i --world-size N --gpu j</code> to shard videos across rendering workers, and <code>--limit 1</code> to inspect one trajectory first. The renderer writes <code>images/&lt;video&gt;/rgb/001.jpg</code>, matching recorded relative image paths. It renders every pose of each selected trajectory, covering uniform-history images and the three local predecessor frames required for temporal fusion. Existing frames are retained. Use a fresh output directory when changing simulator/sensor settings.</p>
+<p>The source collection code wrote RGB JPEGs using Pillow's default JPEG settings. The renderer uses the same save operation, but byte-for-byte RGB reproduction has not been verified during packaging; renderer, driver and JPEG library differences can change pixels. Use original RGB assets and their integrity records when available. Before training, inspect a rendered frame and its released object mask at the same frame index. This is especially important because the masks supervise spatial attention on the rendered current observation.</p>
+<h2 id="4-verify-and-relocate-frozen-training-data">4. Verify and relocate frozen training data</h2>
+<p>The final stage selects 157,465 of 629,862 R2R source rows and 472,323 of 1,889,294 RxR source rows: 629,788 total. Sampling is row based, seed 42, without replacement, using annotation-complete candidates. It is not a random 25% of trajectories. The candidate snapshot is fixed; later completed exports must not alter the selection.</p>
+<p>Each source has JSONL records and seven <code>.npy</code> arrays: <code>offsets</code> (byte offsets), <code>source_indices</code> (original row identities), <code>spans</code> (subtask character bounds), <code>phases</code>, <code>groups</code>, <code>weights</code> and <code>o_eligible</code>. S weights are balanced across selected trajectory phases and normalized within each source. R2R and RxR both use their frozen object masks. No visible-object mask means missing supervision, not a negative object target.</p>
+<p>Use the add-on's frozen selection. The materializer in Step 2 writes
+<code>stage3-training-data/manifest.local.json</code>, reconstructed JSONL records and their
+array sidecars. Its hashes and offsets refer to those newly written local files.
+No additional manifest relocation is needed. Recreate the local manifest after
+moving or changing the training inputs.</p>
+<p>In the training environment, set <code>FULL_MANIFEST</code> to the actual materialized or relocated manifest, then decode and collate examples without loading the 8B model:</p>
+<pre><code class="language-bash">export PYTHONPATH=&quot;$PWD/src:$PWD/third_party/vggt&quot;
+export FULL_MANIFEST=../stage3-training-data/manifest.local.json
+python tools/smoke_dataset.py --manifest &quot;$FULL_MANIFEST&quot; \
+  --processor ../weights/stage3-initialization
+</code></pre>
+<p>This checks positive S/O examples from both sources, image decoding, tokenizer span mapping, object-mask pooling, temporal predecessor frames, VGGT image preprocessing and collation. Run the two-update gradient smoke in README.md before a formal distributed run.</p>
+<h2 id="annotation-schema-and-provenance">Annotation schema and provenance</h2>
+<p>Materialized action-training rows contain <code>instruction</code>, chronological relative <code>images</code> (history followed by one current frame), <code>n_memory</code>, <code>conversations</code>, <code>action_text</code>, current step <code>c</code>, <code>subtask_phase_index</code>, and <code>object_supervision</code>. The latter records <code>mask_loss_eligible</code> and <code>active_masks</code>, including mask filenames/hashes and frame identities. Public instruction IDs and original selected-row identities remain in the addon. Exact character spans and group weights come from the sidecars; do not approximate them by a different tokenizer search. The inherited R2R subtask lineage is FGR2R; the added object grounding/mask labels are automatically generated derived annotations.</p>
+<p>The data loader sanitizes legacy subtask-answer text into an action-only policy target. Ground-truth subtasks, character spans and object masks supply training losses only. They are not included in the inference prompt. The current-frame spatial-forcing weight is 0.5, temporal-difference weight 0.1, native subtask/object weights 0.01 each, with a 0.03 auxiliary warmup ratio.</p>
+<p><code>tools/regenerate_expert25.py</code> preserves the selected run's sampling/export logic with explicit path arguments. It can regenerate the selection <strong>if</strong> the original full-source indexed R2R manifest/arrays, frozen RxR completed-case snapshot and schema-v2 completed exports are available:</p>
+<pre><code class="language-bash">python tools/regenerate_expert25.py \
+  --prior-full-data /path/to/full-indexed-data \
+  --rxr-completed-exports /path/to/completed-schema-v2-exports \
+  --completed-snapshot /path/to/frozen/rxr_completed_snapshot.json \
+  --output /path/to/new-selection
+</code></pre>
+<p>Those annotation-production inputs are not required when reconstructing from the complete frozen addon. This script does not regenerate subtask/object labels by invoking a different VLM or segmenter, which could produce different labels. The frozen labels and masks define the reproducible stage-3 targets.</p>
+<p>For collecting <strong>new</strong> expert datasets, <code>src/data_process/gt_following_rollout.py</code> and <code>build_vln_samples.py</code> expose <code>--help</code>; the latter uses memory size 8, four future actions and seed 42. These generic collection tools are not a substitute for the exact collected poses, recorded prompt choices or frozen annotation targets when reproducing <code>stage3-epoch1</code>.</p>
+<h2 id="5-obtain-the-exact-training-teacher">5. Obtain the exact training teacher</h2>
+<p>The vendored <code>third_party/vggt/vggt</code> source is the teacher implementation used by the final stage. Its source hashes and model hash are in <code>config/vggt_reference.json</code>. The original snapshot had no recorded Git commit, so the included file hashes identify its source directly.</p>
+<p>The exact 5,026,874,952-byte teacher matches the <a href="https://huggingface.co/facebook/VGGT-1B/blob/main/model.pt">official VGGT-1B model payload</a>, SHA256 <code>d15bf50a8615c8225ed48b51ea5cac673d82442ec0309036df555a053253afe0</code>. After reviewing upstream terms, download it with:</p>
+<pre><code class="language-bash">python tools/download_teacher.py --output ../assets/vggt/vggt.pt
+</code></pre>
+<p>The downloader verifies size and SHA256 before completing the file. The teacher is frozen and used only in training. It is not needed for inference or benchmark rollout.</p><footer>GuidedNav · Anonymous Authors · Research artifacts and reproduction guide</footer></main></div></body></html>

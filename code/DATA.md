@@ -1,6 +1,22 @@
 # Data and teacher preparation
 
-The annotation + trajectory + prompt-metadata addon is **not publicly released yet**. Once available, it can be combined with the public benchmark instructions and a licensed Matterport3D installation to reconstruct the stage-3 training inputs; distributing RGB is not required. The addon must include the exact collected agent poses/actions, aligned labels/masks, frozen selection arrays and per-row prompt choices. Source code alone is not a complete training-data release. Model weights are also pending release; check the project page for actual availability.
+> **Upload in progress.** Model and data download links will become active after all files pass the public-download checks.
+
+
+The complete selected Stage 3 annotation, trajectory and prompt-metadata add-on
+is being uploaded to the [public release](https://github.com/anonymousauthor-s/GuidedNav/releases/tag/stage3-epoch1). From `code/`, download it with:
+
+```bash
+python tools/download_assets.py --group data
+```
+
+It installs `annotations/`, `data/r2r/traj/`, `data/rxr/traj/`,
+`data/pose-manifest.json` and `prompt-metadata/` at the repository root.
+Combine these files with official benchmark instructions and licensed
+Matterport3D scenes to reconstruct the training inputs. The package supplies
+exact collected poses/actions, aligned labels/masks, frozen selection arrays and
+per-row prompt choices. RGB is rendered locally. See the [model guide](https://anonymousauthor-s.github.io/GuidedNav/guide/models/)
+for the full weights and [data terms](https://github.com/anonymousauthor-s/GuidedNav/releases/tag/stage3-epoch1) for attribution and upstream conditions.
 
 The stage-3 epoch uses 157,465 R2R rows and 472,323 English RxR rows: 629,788 selected observations from 18,656 collected trajectories. This is the exact training selection, rather than the total size of Guided-R2R/Guided-RxR. The model directories are `navigation-base`, `stage3-initialization` and `stage3-epoch1`; see README.md for training and inference.
 
@@ -88,7 +104,7 @@ The output is a new local `manifest.local.json` and compatible JSONL/array files
 
 ## 3. Render training observations from collected poses
 
-The complete addon must preserve the original per-video trajectory NPZ files. They store world-space **agent** positions and rotations in **w,x,y,z** order, with one pose per observation, as well as the recorded discrete actions. Their filenames match the video basename in each annotated row. All 18,656 selected trajectories were checked against the training observation/action indices. `tools/render_training_rgb.py` converts to Habitat's x,y,z,w coefficients and reapplies the camera offset once. It does not rerun a shortest-path follower or sample a different trajectory.
+The add-on provides the original per-video collected positions, rotations and actions in NPZ files. Unused scene semantics and reference-path fields are omitted. The files store world-space **agent** positions and rotations in **w,x,y,z** order, with one pose per observation, as well as the recorded discrete actions. Their filenames match the video basename in each annotated row. All 18,656 selected trajectories were checked against the training observation/action indices. `tools/render_training_rgb.py` converts to Habitat's x,y,z,w coefficients and reapplies the camera offset once. It does not rerun a shortest-path follower or sample a different trajectory.
 
 In the simulator environment, from `code/`:
 
@@ -113,19 +129,11 @@ The final stage selects 157,465 of 629,862 R2R source rows and 472,323 of 1,889,
 
 Each source has JSONL records and seven `.npy` arrays: `offsets` (byte offsets), `source_indices` (original row identities), `spans` (subtask character bounds), `phases`, `groups`, `weights` and `o_eligible`. S weights are balanced across selected trajectory phases and normalized within each source. R2R and RxR both use their frozen object masks. No visible-object mask means missing supervision, not a negative object target.
 
-Use the complete addon's frozen selection, not a newly sampled dataset. The materializer above writes a local training manifest directly. If using a compatible pre-materialized JSONL package instead, relocate and verify its manifest after extraction:
-
-```bash
-python tools/prepare_data_manifest.py \
-  --manifest ../data/manifest.json --array-root ../data \
-  --r2r-jsonl ../data/r2r/samples_perstep.jsonl \
-  --rxr-jsonl ../data/rxr/samples_perstep.jsonl \
-  --r2r-rgb ../data/r2r/rgb --rxr-rgb ../data/rxr/rgb \
-  --r2r-masks ../data/r2r/masks --rxr-masks ../data/rxr/masks \
-  --output ../data/manifest.local.json
-```
-
-If the data package uses different JSONL or mask subdirectory names, pass those actual locations. Mask roots must be the directories against which the row's relative `object_supervision.active_masks[].mask` paths resolve. Reconstructed JSONL serialization and byte offsets can differ while retaining exactly the same selected examples and training inputs. The materializer writes the new hashes and offsets; the relocation tool verifies existing payload hashes and records current file modification times. After transferring files, use the newly materialized or relocated local manifest.
+Use the add-on's frozen selection. The materializer in Step 2 writes
+`stage3-training-data/manifest.local.json`, reconstructed JSONL records and their
+array sidecars. Its hashes and offsets refer to those newly written local files.
+No additional manifest relocation is needed. Recreate the local manifest after
+moving or changing the training inputs.
 
 In the training environment, set `FULL_MANIFEST` to the actual materialized or relocated manifest, then decode and collate examples without loading the 8B model:
 

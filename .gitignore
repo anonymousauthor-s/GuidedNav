@@ -10,3 +10,6 @@ __pycache__/
 /assets/vggt/
 /runs/
 /results/
+
+.guidednav-downloads/
+*.guidednav-part

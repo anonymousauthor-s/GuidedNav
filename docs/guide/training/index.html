@@ -1,0 +1,96 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Training · GuidedNav</title><meta name="description" content="GuidedNav anonymous model, data and reproduction guide"><link rel="canonical" href="https://anonymousauthor-s.github.io/GuidedNav/guide/training/"><link rel="stylesheet" href="../guide.css"></head><body><header><div><a class="brand" href="https://anonymousauthor-s.github.io/GuidedNav/">GuidedNav</a><nav aria-label="Documentation"><a href="https://anonymousauthor-s.github.io/GuidedNav/">Project</a><a href="../inference/">Inference</a><a href="../training/" aria-current="page">Training</a><a href="../data/">Data</a><a href="../models/">Models</a><a href="https://github.com/anonymousauthor-s/GuidedNav/">Code ↗</a></nav></div></header><div class="layout"><aside aria-label="On this page"><div class="toc">
+<ul>
+<li><a href="#stage-3-training">Stage 3 training</a><ul>
+<li><a href="#prepare-the-assets">Prepare the assets</a></li>
+<li><a href="#final-stage-training">Final-stage training</a></li>
+<li><a href="#stage-3-training_1">Stage 3 training</a><ul>
+<li><a href="#reference-setup">Reference setup</a></li>
+<li><a href="#launch-on-four-nodes">Launch on four nodes</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</aside><main class="paper"><p role="status" style="padding:14px;background:#fff5d8;border-radius:8px"><strong>Upload in progress.</strong> Model and data download links will become active after all files pass the public-download checks.</p><div class="eyebrow">Anonymous research release · Stage 3</div><h1 id="stage-3-training">Stage 3 training</h1>
+<p>All commands run from <code>GuidedNav/code/</code>.</p>
+<h2 id="prepare-the-assets">Prepare the assets</h2>
+<pre><code class="language-bash">python tools/download_assets.py --group all
+</code></pre>
+<p>Follow the <a href="../data/">data guide</a> to obtain official instructions/scenes, render observations, materialize the training manifest and obtain the VGGT teacher.</p>
+<h2 id="final-stage-training">Final-stage training</h2>
+<p><code>config/training_environment.json</code> records package versions read from the exact image used by the selected final-stage run. The important versions are Python 3.12.3, Torch 2.10.0a0+b558c986e8.nv25.11, TorchVision 0.25.0a0+7a13ad0f, Transformers 4.57.6, PEFT 0.19.1, Accelerate 1.14.0, DeepSpeed 0.16.5 and FlashAttention 2.7.4.post1+25.11. This is a development Torch build, so a normal <code>pip install torch==2.10.0</code> does not recreate it.</p>
+<p>The public <a href="https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel-25-11.html">NVIDIA PyTorch 25.11 container</a> contains the same Torch build and CUDA 13.0.2. <code>Dockerfile.training</code> provides an application-environment reconstruction based on that public image:</p>
+<pre><code class="language-bash">docker build -f Dockerfile.training -t guidednav-training .
+docker run --rm --gpus all --ipc=host --network host \
+  -v /absolute/path/to/release:/release \
+  -e PYTHONPATH=/release/code/src:/release/code/third_party/vggt \
+  --entrypoint python guidednav-training \
+  /release/code/tools/check_environment.py --training
+</code></pre>
+<p>The Dockerfile has not been rebuilt during packaging. Compare the check output with the recorded environment before the dataset/gradient smoke. Configure NVIDIA drivers compatible with the container's CUDA release according to NVIDIA's documentation. Distributed launch requires the same release and data paths on every node, working NCCL transport and enough memory for an 8B VLM plus frozen VGGT teacher. The reference recipe used 32 GPUs; a smaller hardware configuration needs a separately validated recipe.</p>
+<h2 id="stage-3-training_1">Stage 3 training</h2>
+<h3 id="reference-setup">Reference setup</h3>
+<p>The launcher reproduces the one-epoch guidance stage with a fresh optimizer and scheduler:</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Training GPUs</td>
+<td>32: 4 nodes × 8 GPUs</td>
+</tr>
+<tr>
+<td>Batch size</td>
+<td>1 per GPU, accumulation 8; global batch 256</td>
+</tr>
+<tr>
+<td>Epochs</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Optimizer</td>
+<td>AdamW; learning rate <code>2e-4</code>; weight decay <code>0.01</code></td>
+</tr>
+<tr>
+<td>Schedule</td>
+<td>Cosine decay; 3% warmup</td>
+</tr>
+<tr>
+<td>LoRA</td>
+<td>Rank 32, alpha 16, dropout 0; all supported linear layers</td>
+</tr>
+<tr>
+<td>Precision and distribution</td>
+<td>BF16; DeepSpeed ZeRO-2</td>
+</tr>
+<tr>
+<td>Seed</td>
+<td>42</td>
+</tr>
+<tr>
+<td>Guidance weights</td>
+<td>Subtask <code>0.01</code>, landmark <code>0.01</code>, long-horizon <code>0.5</code>, local <code>0.1</code></td>
+</tr>
+</tbody>
+</table>
+<p>The paper's 64-GPU cluster includes training and asynchronous evaluation. This training launcher uses 32 GPUs. A smaller configuration needs a separately validated batch and schedule.</p>
+<h3 id="launch-on-four-nodes">Launch on four nodes</h3>
+<p>Prepare the training environment in <a href="../environment/#final-stage-training">../environment/</a>. Mount the repository, data, teacher, and weights at the same absolute paths on every node. On each node, set its rank and a shared rendezvous address:</p>
+<pre><code class="language-bash">export FULL_MANIFEST=/absolute/path/to/manifest.local.json
+export MASTER_ADDR=training-rendezvous-host
+export NODE_RANK=0  # use 0, 1, 2, or 3 on the corresponding node
+export NCCL_SOCKET_IFNAME=your_training_network_interface
+export FULL_OUTPUT_DIR=/absolute/path/to/new-empty-run
+bash scripts/train_stage3.sh
+</code></pre>
+<p>The launcher uses <code>weights/navigation-base</code> and <code>weights/stage3-initialization</code> by default. Set <code>GUIDEDNAV_BASE</code>, <code>GUIDEDNAV_INIT</code>, <code>VGGT_SOURCE</code>, or <code>VGGT_WEIGHTS</code> to override their locations. It restores the initialization adapter and all learned auxiliary components, then starts the one-epoch Stage 3 optimization.</p>
+<p>After the epoch, the inference-ready adapter, auxiliary weights, and processor are exported to:</p>
+<pre><code class="language-text">$FULL_OUTPUT_DIR/stage3-epoch1/
+</code></pre>
+<p>Complete <code>checkpoint-*</code> trainer directories retain the optimizer state for interrupted-run recovery. To resume, set <code>FULL_RESUME</code> to a complete trainer checkpoint and rerun the same launcher. The supplied Stage 3 initialization starts a fresh optimization stage and does not contain optimizer-resume state.</p>
+<p>For a two-update diagnostic, use <code>FULL_SMOKE=1</code> and a separate empty output directory. <code>NNODES=1 NPROC_PER_NODE=1</code> can reduce its worker count if memory permits. Changing the worker count changes the effective batch and schedule; this diagnostic does not reproduce the reference model.</p><footer>GuidedNav · Anonymous Authors · Research artifacts and reproduction guide</footer></main></div></body></html>
