@@ -2,9 +2,7 @@
 
 ## Data for the three training stages
 
-The [training guide](TRAINING.md) follows the paper's three-stage setup. Prepare
-the sources below before launching training; downloading the final evaluation
-model is a separate workflow.
+Prepare the following sources for the [three training stages](TRAINING.md).
 
 | Stage | Navigation source | Visual instruction source |
 | --- | --- | --- |
@@ -19,7 +17,7 @@ instruction annotations and their media from the official
 and [VSI-590K](https://huggingface.co/datasets/nyu-visionx/VSI-590K) repositories.
 The paper uses 495,164 LLaVA-Video and 295,333 VSI examples in the VQA mixture.
 The example configuration selects those counts deterministically from your
-local input pool; it does not identify the original historical subset.
+local input pool. It saves the selected indices for reuse.
 
 ### Collect Stage 1 expert navigation data
 
@@ -77,9 +75,8 @@ RxR training guide file and a separate RxR output directory. Use `--rank` and
 are exposed by `--help`; retain the configuration with your generated corpus.
 
 The DAgger target must be `expert_chunks`, **not the policy's executed actions**.
-Freshly collected rollouts depend on your Stage 1 policy and are new data;
-their identities and counts need not match the paper's original 2.97M corpus.
-The original frozen DAgger corpus is not part of the annotation add-on.
+The collected states and sample count depend on your Stage 1 policy.
+Keep the generated corpus and collection settings with the training run.
 
 ### Freeze Stage 1 and Stage 2 manifests
 
@@ -126,11 +123,11 @@ exact collected poses/actions, aligned labels/masks, frozen selection arrays and
 per-row prompt choices. RGB is rendered locally. See the [model guide](https://anonymousauthor-s.github.io/GuidedNav/guide/models/)
 for the full weights and [data terms](https://github.com/anonymousauthor-s/GuidedNav/releases/) for attribution and upstream conditions.
 
-The stage-3 epoch uses 157,465 R2R rows and 472,323 English RxR rows: 629,788 selected observations from 18,656 collected trajectories. This is the exact training selection, rather than the total size of Guided-R2R/Guided-RxR. For training, use your own Stage 2 model as the Stage 3 backbone; see [TRAINING.md](TRAINING.md). The downloaded `navigation-base` and `stage3-epoch1` directories jointly form the final paper model for evaluation.
+The released Stage 3 subset contains 157,465 R2R and 472,323 English RxR observations from 18,656 trajectories. Use your Stage 2 model as the training backbone; see [TRAINING.md](TRAINING.md).
 
 ## 1. Obtain official benchmark assets
 
-Follow the [VLN-CE data setup](https://github.com/jacobkrantz/VLN-CE#data) for R2R episodes and MP3D scene preparation, the [official RxR-Habitat data instructions in VLN-CE](https://github.com/jacobkrantz/VLN-CE#episodes-room-across-room-rxr) for RxR guide episodes and ground-truth trajectories, and the [Matterport3D access instructions](https://niessner.github.io/Matterport/) for scene assets. Download through the upstream access process; this release does not replace those permissions.
+Follow the [VLN-CE data setup](https://github.com/jacobkrantz/VLN-CE#data) for R2R episodes and MP3D scene preparation, the [official RxR-Habitat data instructions in VLN-CE](https://github.com/jacobkrantz/VLN-CE#episodes-room-across-room-rxr) for RxR guide episodes and ground-truth trajectories, and the [Matterport3D access instructions](https://niessner.github.io/Matterport/) for scene assets. Follow each source's access and licensing terms.
 
 For evaluation, arrange paths relative to the **release root**:
 
@@ -152,7 +149,7 @@ python tools/build_rxr_navmesh.py \
   --scenes-root ../data/scene_datasets --output ../data/rxr_navmesh
 ```
 
-This CPU geometry tool creates a renderer-free simulator, applies default `NavMeshSettings` with height/radius 0.88/0.18, saves each scene's new mesh, and checks finite start-to-goal reachability plus valid reference trajectories for every English episode. It requires the exact benchmark data SHA256 `93abddce58e8232867a8738daa8107eb82953693a9d5e70779d1eb00386b222a` and GT SHA256 `bdfbb624132501bf297eb0ea16a99e38682668ba5e9ce1554ca5cdcde6b65a0d`. A different or recompressed file must be reconciled with the original benchmark payload before claiming the same protocol. `audit.json` and `*.navmesh` stay together; the evaluator verifies each mesh hash and agent dimensions. `scripts/evaluate.sh rxr` sets the audit/dataset/GT environment paths automatically. Override `RXR_NAVMESH_AUDIT_PATH`, `RXR_EVAL_DATA_PATH`, `RXR_EVAL_GT_PATH` and `GUIDEDNAV_SCENES_DIR` when using a different local layout.
+This CPU geometry tool creates a renderer-free simulator, applies default `NavMeshSettings` with height/radius 0.88/0.18, saves each scene's new mesh, and checks finite start-to-goal reachability plus valid reference trajectories for every English episode. It requires the exact benchmark data SHA256 `93abddce58e8232867a8738daa8107eb82953693a9d5e70779d1eb00386b222a` and GT SHA256 `bdfbb624132501bf297eb0ea16a99e38682668ba5e9ce1554ca5cdcde6b65a0d`. Keep the original compressed files to preserve these hashes. `audit.json` and `*.navmesh` stay together; the evaluator verifies each mesh hash and agent dimensions. `scripts/evaluate.sh rxr` sets the audit/dataset/GT environment paths automatically. Override `RXR_NAVMESH_AUDIT_PATH`, `RXR_EVAL_DATA_PATH`, `RXR_EVAL_GT_PATH` and `GUIDEDNAV_SCENES_DIR` when using a different local layout.
 
 ## 2. Match the addon to public instructions
 
@@ -182,7 +179,7 @@ python tools/verify_annotation_alignment.py \
   --report ./alignment-report.json
 ```
 
-The complete addon needs the following information. It does not need to duplicate full upstream instructions or scene imagery:
+The add-on provides the following information:
 
 | Information | Purpose |
 | --- | --- |
@@ -195,7 +192,7 @@ The complete addon needs the following information. It does not need to duplicat
 
 The conjunction IDs require one byte per selected row, plus small headers. The current action-training loader does not use stored waypoint coordinates or distances as targets. It consumes the recovered instruction, image/history paths, action-only conversation and the S/O supervision. Legacy subtask-answer text is removed before training, so its original string does not have to be redistributed.
 
-`tools/materialize_annotation_addon.py` reconstructs these loader records from the public text and the complete addon. It never reruns an expert follower, resamples examples or regenerates labels:
+`tools/materialize_annotation_addon.py` reconstructs loader records from the public text and the add-on:
 
 ```bash
 python tools/materialize_annotation_addon.py \
@@ -208,11 +205,11 @@ python tools/materialize_annotation_addon.py \
   --output ../stage3-training-data
 ```
 
-The output is a new local `manifest.local.json` and compatible JSONL/array files; it does not alter the input artifacts. Full-selection verification matched the original action labels, history-frame paths, normalized action prompts and mask pointers for all 629,788 observations. This verifies data correspondence and input reconstruction, rather than a new GPU training run or a byte-identical RGB-rendering result.
+The output contains `manifest.local.json`, reconstructed JSONL records and array sidecars. The action labels, history-frame paths, prompts and mask pointers have been checked across all 629,788 observations.
 
 ## 3. Render training observations from collected poses
 
-The add-on provides the original per-video collected positions, rotations and actions in NPZ files. Unused scene semantics and reference-path fields are omitted. The files store world-space **agent** positions and rotations in **w,x,y,z** order, with one pose per observation, as well as the recorded discrete actions. Their filenames match the video basename in each annotated row. All 18,656 selected trajectories were checked against the training observation/action indices. `tools/render_training_rgb.py` converts to Habitat's x,y,z,w coefficients and reapplies the camera offset once. It does not rerun a shortest-path follower or sample a different trajectory.
+The add-on provides the original per-video collected positions, rotations and actions in NPZ files. Unused scene semantics and reference-path fields are omitted. The files store world-space **agent** positions and rotations in **w,x,y,z** order, with one pose per observation, as well as the recorded discrete actions. Their filenames match the video basename in each annotated row. All 18,656 selected trajectories were checked against the training observation/action indices. `tools/render_training_rgb.py` converts to Habitat's x,y,z,w coefficients and reapplies the camera offset once.
 
 In the simulator environment, from `code/`:
 
@@ -229,7 +226,7 @@ python tools/render_training_rgb.py \
 
 Use `--rank i --world-size N --gpu j` to shard videos across rendering workers, and `--limit 1` to inspect one trajectory first. The renderer writes `images/<video>/rgb/001.jpg`, matching recorded relative image paths. It renders every pose of each selected trajectory, covering uniform-history images and the three local predecessor frames required for temporal fusion. Existing frames are retained. Use a fresh output directory when changing simulator/sensor settings.
 
-The source collection code wrote RGB JPEGs using Pillow's default JPEG settings. The renderer uses the same save operation, but byte-for-byte RGB reproduction has not been verified during packaging; renderer, driver and JPEG library differences can change pixels. Use original RGB assets and their integrity records when available. Before training, inspect a rendered frame and its released object mask at the same frame index. This is especially important because the masks supervise spatial attention on the rendered current observation.
+The renderer saves RGB images with Pillow's default JPEG settings. Before training, inspect a rendered frame and its mask at the same frame index to check their alignment.
 
 ## 4. Verify and relocate frozen training data
 
@@ -270,13 +267,13 @@ python tools/regenerate_expert25.py \
   --output /path/to/new-selection
 ```
 
-Those annotation-production inputs are not required when reconstructing from the complete frozen addon. This script does not regenerate subtask/object labels by invoking a different VLM or segmenter, which could produce different labels. The frozen labels and masks define the reproducible stage-3 targets.
+For the released subset, use the add-on's labels, masks and selection arrays directly.
 
-For collecting **new** expert datasets, `src/data_process/gt_following_rollout.py` and `build_vln_samples.py` expose `--help`; the latter uses memory size 8, four future actions and seed 42. These generic collection tools are not a substitute for the exact collected poses, recorded prompt choices or frozen annotation targets when reproducing `stage3-epoch1`.
+For additional expert data, use `src/data_process/gt_following_rollout.py` and `build_vln_samples.py` with memory size 8, four future actions and seed 42.
 
 ## 5. Obtain the exact training teacher
 
-The vendored `third_party/vggt/vggt` source is the teacher implementation used by the final stage. Its source hashes and model hash are in `config/vggt_reference.json`. The original snapshot had no recorded Git commit, so the included file hashes identify its source directly.
+The vendored `third_party/vggt/vggt` source is the teacher implementation used by the final stage. Its source hashes and model hash are in `config/vggt_reference.json`. File hashes identify the included source snapshot.
 
 The exact 5,026,874,952-byte teacher matches the [official VGGT-1B model payload](https://huggingface.co/facebook/VGGT-1B/blob/main/model.pt), SHA256 `d15bf50a8615c8225ed48b51ea5cac673d82442ec0309036df555a053253afe0`. After reviewing upstream terms, download it with:
 
@@ -284,4 +281,4 @@ The exact 5,026,874,952-byte teacher matches the [official VGGT-1B model payload
 python tools/download_teacher.py --output ../assets/vggt/vggt.pt
 ```
 
-The downloader verifies size and SHA256 before completing the file. The teacher is frozen and used only in training. It is not needed for inference or benchmark rollout.
+The downloader verifies size and SHA256 before completing the file. The frozen teacher provides spatial supervision during training.

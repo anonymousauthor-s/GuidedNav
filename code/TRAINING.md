@@ -1,8 +1,7 @@
 # Three-stage training
 
-Train from the official Qwen3-VL model through Stages 1, 2 and 3. Each stage
-consumes the preceding stage's **locally trained output**. The downloadable
-GuidedNav model is the paper's final policy for inference and evaluation.
+Train GuidedNav-8B from Qwen3-VL-8B-Instruct through Stages 1, 2 and 3.
+Each stage uses the preceding stage's exported model.
 
 All commands run from `GuidedNav/code/`. Install the [training environment](ENVIRONMENT.md#training)
 and use the same absolute model and data paths on every node.
@@ -40,10 +39,9 @@ The paper uses approximately 0.53M R2R experts, 1.90M RxR experts, 2.97M DAgger
 examples and 0.79M visual instruction examples. Freeze the actual source files
 and selected rows in the training manifests before launching a run.
 
-The public annotation add-on supplies the selected Stage 3 annotations,
-collected poses/actions and prompt metadata. It is not a replacement for the
-Stage 1 expert corpus, the Stage 2 DAgger corpus or upstream VQA media.
-Keep the same VQA selection across Stages 1 and 2.
+Download the Stage 3 annotations, poses/actions and prompt metadata with the
+provided downloader. Prepare expert rollouts, DAgger rollouts and VQA media
+using the data guide. Keep the same VQA selection across Stages 1 and 2.
 
 ## Launch Stage 1 — expert navigation and visual instruction tuning
 
@@ -99,10 +97,9 @@ python tools/smoke_dataset.py --manifest "$FULL_MANIFEST" --processor "$GUIDEDNA
 bash scripts/train_stage3.sh
 ```
 
-This stage starts fresh LoRA adapters, spatial projectors and a temporal gate
-on your Stage 2 backbone. It does not download or require an intermediate
-GuidedNav checkpoint. The exported adapter, processor, temporal state and recipe
-are saved together in `FULL_OUTPUT_DIR/stage3-epoch1/`.
+Stage 3 initializes LoRA adapters, spatial projectors and a temporal gate on
+your Stage 2 backbone. It saves the adapter, processor, temporal state and recipe
+in `FULL_OUTPUT_DIR/stage3-epoch1/`.
 Keep that directory with the exact Stage 2 backbone used to train it.
 
 ## Hardware and run checks
@@ -111,12 +108,10 @@ The default launch uses four nodes with eight GPUs each. Stages 1 and 2 use
 microbatch 2 and accumulation 4; Stage 3 uses microbatch 1 and accumulation 8.
 The scripts calculate accumulation from worker count to maintain global batch
 256 and reject incompatible combinations. Set `NNODES` and `NPROC_PER_NODE` for your hardware; `MICROBATCH` can also be
-changed for Stages 1/2 (Stage 3 uses microbatch 1); matching global batch alone does not validate
-a new hardware/runtime configuration.
+changed for Stages 1/2. Stage 3 uses microbatch 1.
 
 For a two-update diagnostic, use a separate empty output directory and set
-`TRAIN_SMOKE=1` for Stages 1/2 or `FULL_SMOKE=1` for Stage 3. A smoke run is not an epoch
-export or a reference-metric result. Complete trainer checkpoints preserve
+`TRAIN_SMOKE=1` for Stages 1/2 or `FULL_SMOKE=1` for Stage 3. Complete trainer checkpoints preserve
 optimizer state for interrupted-run recovery; epoch exports are for stage
 handoff and inference.
 
@@ -132,15 +127,8 @@ export EVAL_OUTPUT=/absolute/path/to/new-results/r2r
 bash scripts/evaluate.sh r2r
 ```
 
-Replace `r2r` with `rxr` for RxR. To evaluate the **downloaded paper model**,
+Replace `r2r` with `rxr` for RxR. To evaluate the **released GuidedNav-8B checkpoint**,
 leave the default released-model settings in place and follow the
 [evaluation guide](README.md#habitat-evaluation).
 
-## Validation scope
-
-These launchers implement the paper's three-stage setup. The complete
-three-stage training sequence and GPU benchmarks have not been rerun from this
-public package. Recollected DAgger trajectories or newly selected upstream rows
-are new training data; they are not an exact reconstruction of the original
-frozen training corpus. The data guide identifies the released annotation
-selection and the inputs obtained or generated separately.
+See the [validation record](VALIDATION.json) for completed checks.

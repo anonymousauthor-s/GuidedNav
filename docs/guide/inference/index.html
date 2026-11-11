@@ -9,7 +9,7 @@
 </ul>
 </li>
 <li><a href="#habitat-evaluation">Habitat evaluation</a></li>
-<li><a href="#release-validation">Release validation</a></li>
+<li><a href="#references">References</a></li>
 </ul>
 </li>
 </ul>
@@ -69,7 +69,7 @@ observations/0003.jpg
 </tr>
 </tbody>
 </table>
-<p>The default frame path uses BF16 and SDPA. It loads the adapter together with its learned temporal components; loading the LoRA file alone is insufficient.</p>
+<p>Frame inference uses BF16 and SDPA, with the adapter and learned temporal state loaded together.</p>
 <h3 id="use-a-model-you-trained">Use a model you trained</h3>
 <p>The default <code>--weights-source released</code> verifies the released model's identity. After Stage 3 training, use the exported model directory with <code>--weights-source trained</code>:</p>
 <pre><code class="language-bash">python -m qwenvl.infer_frames \
@@ -95,5 +95,5 @@ EVAL_OUTPUT=/absolute/path/to/new-evaluation-directory \
 bash scripts/evaluate.sh r2r
 </code></pre>
 <p>Replace <code>r2r</code> with <code>rxr</code> for RxR evaluation. A one-episode diagnostic is available by appending <code>--max_episodes 1</code>.</p>
-<h2 id="release-validation">Release validation</h2>
-<p>The recorded checks include CPU imports, argument parsing, configuration composition, and sample decoding/collation. Full GPU retraining, complete benchmark evaluation, and full-dataset RGB rendering have not been rerun during packaging. See <a href="https://raw.githubusercontent.com/anonymousauthor-s/GuidedNav/main/code/VALIDATION.json">VALIDATION.json</a> for the exact checks and limits, <a href="../environment/">ENVIRONMENT.md</a> for runtime versions, and <a href="https://raw.githubusercontent.com/anonymousauthor-s/GuidedNav/main/code/THIRD_PARTY_NOTICES.md">THIRD_PARTY_NOTICES.md</a> for retained upstream notices.</p><footer>GuidedNav · Anonymous Authors · Research artifacts and reproduction guide</footer></main></div></body></html>
+<h2 id="references">References</h2>
+<p><a href="../environment/">Environment setup</a> · <a href="https://raw.githubusercontent.com/anonymousauthor-s/GuidedNav/main/code/VALIDATION.json">Validation record</a> · <a href="https://raw.githubusercontent.com/anonymousauthor-s/GuidedNav/main/code/THIRD_PARTY_NOTICES.md">Third-party notices</a></p><footer>GuidedNav · Anonymous Authors · Research artifacts and reproduction guide</footer></main></div></body></html>

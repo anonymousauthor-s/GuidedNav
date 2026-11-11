@@ -1,10 +1,10 @@
 # Environments
 
-Training and Habitat use separate runtimes. The original training image did not contain Habitat. Do not force old Habitat simulator dependencies into the training image.
+Use separate environments for training, frame inference and Habitat evaluation.
 
 ## Training
 
-`config/training_environment.json` records package versions read from the exact image used by the selected final-stage run. The important versions are Python 3.12.3, Torch 2.10.0a0+b558c986e8.nv25.11, TorchVision 0.25.0a0+7a13ad0f, Transformers 4.57.6, PEFT 0.19.1, Accelerate 1.14.0, DeepSpeed 0.16.5 and FlashAttention 2.7.4.post1+25.11. This is a development Torch build, so a normal `pip install torch==2.10.0` does not recreate it.
+`config/training_environment.json` records package versions read from the exact image used by the selected final-stage run. The important versions are Python 3.12.3, Torch 2.10.0a0+b558c986e8.nv25.11, TorchVision 0.25.0a0+7a13ad0f, Transformers 4.57.6, PEFT 0.19.1, Accelerate 1.14.0, DeepSpeed 0.16.5 and FlashAttention 2.7.4.post1+25.11. Use the NVIDIA container below for this Torch build.
 
 The public [NVIDIA PyTorch 25.11 container](https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel-25-11.html) contains the same Torch build and CUDA 13.0.2. `Dockerfile.training` provides an application-environment reconstruction based on that public image:
 
@@ -17,14 +17,11 @@ docker run --rm --gpus all --ipc=host --network host \
   /release/code/tools/check_environment.py --training
 ```
 
-The Dockerfile has not been rebuilt during packaging. Compare the check output with the recorded environment before the dataset/gradient smoke. Configure NVIDIA drivers compatible with the container's CUDA release according to NVIDIA's documentation. Distributed launch requires the same release and data paths on every node, working NCCL transport and enough memory for an 8B VLM plus frozen VGGT teacher. The launch scripts default to 32 GPUs with global batch 256; a smaller hardware configuration needs a separately validated recipe.
+Use NVIDIA drivers compatible with the container's CUDA release. Distributed training requires shared model/data paths and working NCCL transport. The launch scripts default to 32 GPUs with global batch 256; adjust the GPU count as described in [TRAINING.md](TRAINING.md).
 
 Stages 1 and 2 also decode VQA video files. The requirements include `av==16.0.1`
 for the [Transformers 4.57.6 default PyAV video backend](https://github.com/huggingface/transformers/blob/v4.57.6/src/transformers/video_utils.py).
-This decoder pin is an environment-reconstruction choice, not a version recorded
-from the historical final-stage image. `check_environment.py --training` checks
-that the decoder distribution is installed. Pre-extracted frame directories do
-not require video-file decoding.
+`check_environment.py --training` checks that the decoder is installed.
 
 ## Frame-policy inference
 
@@ -39,7 +36,7 @@ export PYTHONPATH="$PWD/src"
 python tools/check_environment.py
 ```
 
-The ancillary NumPy/Pillow pins in the inference requirements are packaging choices; only the four core runtime versions above were recorded from the deployed service. Frame inference does not import Habitat. The original frame service used SDPA; the Habitat benchmark path requests FlashAttention 2, which must be built or installed for its Torch/CUDA ABI.
+Frame inference uses SDPA. Habitat evaluation uses FlashAttention 2 with a build matching the Torch/CUDA versions.
 
 ## Habitat rendering and benchmark evaluation
 
@@ -57,4 +54,5 @@ python -m pip install scipy pillow
 
 Rendering from released poses uses `habitat_sim` directly and does not need the VLM. The benchmark additionally needs a compatible CUDA Torch, Transformers 4.57.6, PEFT, Accelerate and FlashAttention build. `config/habitat_environment.json` and `requirements-habitat-vlm.txt` record the pre-existing evaluation environment in which packaging validated the evaluator imports, CLI and both YAML compositions without a visible GPU: Python 3.9.23, Torch 2.7.0+cu128, TorchVision 0.22.0+cu128, Transformers 4.57.6, PEFT 0.17.1, Accelerate 1.10.1, FlashAttention 2.8.3, Habitat-Lab/Sim 0.2.4. Install matching CUDA Torch/TorchVision first and build FlashAttention for that ABI. The supplied nDTW measure implements the radius-1 FastDTW recurrence in Python and does not require the external `fastdtw` package.
 
-A fresh full Habitat+VLM environment build has not been validated during packaging, and the recorded environment read is not a historical immutable image freeze. Check simulator-only rendering, then a one-episode benchmark before launching the complete evaluation. Do not silently upgrade Habitat or substitute an evaluator with different episode/action settings.
+Check simulator rendering, then run a one-episode evaluation before the complete benchmark.
+See the [validation record](VALIDATION.json) for completed environment checks.

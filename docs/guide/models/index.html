@@ -1,74 +1,61 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Final model downloads · GuidedNav</title><meta name="description" content="GuidedNav final evaluation model and three-stage training guide"><link rel="canonical" href="https://anonymousauthor-s.github.io/GuidedNav/guide/models/"><link rel="stylesheet" href="../guide.css"></head><body><header><div><a class="brand" href="https://anonymousauthor-s.github.io/GuidedNav/">GuidedNav</a><nav aria-label="Documentation"><a href="https://anonymousauthor-s.github.io/GuidedNav/">Project</a><a href="../inference/">Inference</a><a href="../training/">Training</a><a href="../data/">Data</a><a href="../models/" aria-current="page">Model</a><a href="https://github.com/anonymousauthor-s/GuidedNav/">Code ↗</a></nav></div></header><div class="layout"><aside aria-label="On this page"><div class="toc">
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Model downloads · GuidedNav</title><meta name="description" content="GuidedNav final evaluation model and three-stage training guide"><link rel="canonical" href="https://anonymousauthor-s.github.io/GuidedNav/guide/models/"><link rel="stylesheet" href="../guide.css"></head><body><header><div><a class="brand" href="https://anonymousauthor-s.github.io/GuidedNav/">GuidedNav</a><nav aria-label="Documentation"><a href="https://anonymousauthor-s.github.io/GuidedNav/">Project</a><a href="../inference/">Inference</a><a href="../training/">Training</a><a href="../data/">Data</a><a href="../models/" aria-current="page">Model</a><a href="https://github.com/anonymousauthor-s/GuidedNav/">Code ↗</a></nav></div></header><div class="layout"><aside aria-label="On this page"><div class="toc">
 <ul>
-<li><a href="#final-model-and-data-downloads">Final model and data downloads</a><ul>
-<li><a href="#download-the-final-paper-model">Download the final paper model</a></li>
-<li><a href="#download-the-training-annotation-add-on">Download the training annotation add-on</a></li>
-<li><a href="#release-files-and-integrity">Release files and integrity</a></li>
+<li><a href="#model-and-data-downloads">Model and data downloads</a><ul>
+<li><a href="#download-guidednav-8b">Download GuidedNav-8B</a></li>
+<li><a href="#download-training-annotations">Download training annotations</a></li>
+<li><a href="#files">Files</a></li>
 </ul>
 </li>
 </ul>
 </div>
-</aside><main class="paper"><div class="eyebrow">Anonymous research release</div><h1 id="final-model-and-data-downloads">Final model and data downloads</h1>
-<p>The only released policy is the <strong>final paper model — Stage 3, epoch 1</strong>,
-provided for inference and R2R-CE / RxR-CE evaluation. No Stage 1, Stage 2 or
-Stage 3 initialization checkpoint is distributed.</p>
-<h2 id="download-the-final-paper-model">Download the final paper model</h2>
+</aside><main class="paper"><div class="eyebrow">Anonymous research release</div><h1 id="model-and-data-downloads">Model and data downloads</h1>
+<p>We release the <strong>GuidedNav-8B checkpoint</strong> for inference and R2R-CE / RxR-CE evaluation.</p>
+<h2 id="download-guidednav-8b">Download GuidedNav-8B</h2>
 <pre><code class="language-bash">git clone https://github.com/anonymousauthor-s/GuidedNav.git
 cd GuidedNav/code
 python tools/download_assets.py --group inference
 </code></pre>
-<p>No account or token is required. Python 3.9+ is sufficient for the downloader.
-It resumes interrupted downloads, checks SHA256 and reassembles the original
-tensor files. Reserve approximately 24 GiB of free disk space during installation.</p>
-<p>The complete final model is <strong>16.60 GiB</strong>, including the BF16 vision encoder,
-language model, final LoRA adapter and learned temporal/auxiliary state. Its
-loader uses two component directories:</p>
+<p>The downloader requires Python 3.9+, supports resuming and verifies SHA256.
+Downloads are public. Reserve approximately 24 GiB of free disk space during installation.</p>
+<p>The checkpoint is <strong>16.60 GiB in BF16</strong>, organized as follows:</p>
 <table>
 <thead>
 <tr>
-<th>Component</th>
+<th>Directory</th>
 <th>Contents</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>weights/navigation-base/</code></td>
-<td>Full backbone and processor required by the final policy</td>
+<td>Vision-language backbone and processor</td>
 </tr>
 <tr>
 <td><code>weights/stage3-epoch1/</code></td>
-<td>Matching final adapter, temporal state, auxiliary weights and processor</td>
+<td>Stage 3 adapter, temporal state, auxiliary weights and processor</td>
 </tr>
 </tbody>
 </table>
-<p>These two components jointly form <strong>one final evaluation model</strong>. They are
-not alternative checkpoints. Keep them together; a vanilla Qwen model cannot
-replace the matching backbone for evaluation of the released policy.</p>
-<p>The model-support archive contains only those final-model components and
-metadata. The four large backbone tensors use 18 transport parts; the downloader
-restores their original files automatically.</p>
+<p>The inference loader uses both directories. The downloader automatically
+reassembles the large backbone files from their transport parts.</p>
 <p>Continue with <a href="../inference/">inference and evaluation</a>.</p>
-<h2 id="download-the-training-annotation-add-on">Download the training annotation add-on</h2>
+<h2 id="download-training-annotations">Download training annotations</h2>
 <pre><code class="language-bash">python tools/download_assets.py --group data
 </code></pre>
-<p>The approximately 457 MiB add-on contains 629,788 selected Stage 3 rows,
-379,428 masks, 18,656 collected trajectories/actions and prompt metadata.
-Obtain original instructions and licensed scenes from upstream, then recover
-text and render RGB using the <a href="../data/">data guide</a>.
-This is the selected Stage 3 add-on, rather than the full Guided annotation
-corpus or the Stage 1/2 expert, DAgger and VQA corpora.</p>
-<p><code>--group all</code> fetches the final evaluation model and this data add-on together.
-Training starts from the official Qwen model and your locally produced
-Stage 1/2 outputs; follow <a href="../training/">three-stage training</a>.</p>
-<h2 id="release-files-and-integrity">Release files and integrity</h2>
+<p>The <strong>457 MiB</strong> Stage 3 annotation package contains 629,788 samples,
+379,428 masks, 18,656 trajectories, recorded actions and prompt metadata.
+Download the original instructions and scenes from their official sources,
+then reconstruct the training inputs using the <a href="../data/">data guide</a>.
+That guide also describes Stage 1/2 expert, DAgger and VQA preparation.</p>
+<p>Use <code>--group all</code> to download the checkpoint and annotation package together.
+For training, follow the <a href="../training/">three-stage guide</a>.</p>
+<h2 id="files">Files</h2>
 <ul>
-<li><a href="https://github.com/anonymousauthor-s/GuidedNav/releases/">Release assets</a></li>
-<li><a href="https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/guidednav-final-model-support.tar.gz">Final-model support archive</a></li>
-<li><a href="https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/guidednav-stage3-data-addon.tar.gz">Training annotation add-on</a></li>
+<li><a href="https://github.com/anonymousauthor-s/GuidedNav/releases/tag/stage3-epoch1">GitHub release</a></li>
+<li><a href="https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/guidednav-final-model-support.tar.gz">Model support files</a></li>
+<li><a href="https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/guidednav-stage3-data-addon.tar.gz">Training annotations</a></li>
 <li><a href="https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/download-manifest.json">Download manifest</a></li>
 <li><a href="https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/SHA256SUMS">SHA256 checksums</a></li>
 <li><a href="https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/MODEL_TERMS.md">Model terms</a></li>
 <li><a href="https://github.com/anonymousauthor-s/GuidedNav/releases/download/stage3-epoch1/DATA_TERMS.md">Data terms</a></li>
-</ul>
-<p>Upstream notices and terms are retained. Obtain Matterport3D scenes through
-the official access process; the add-on does not redistribute those scenes.</p><footer>GuidedNav · Anonymous Authors · Research artifacts and reproduction guide</footer></main></div></body></html>
+</ul><footer>GuidedNav · Anonymous Authors · Research artifacts and reproduction guide</footer></main></div></body></html>

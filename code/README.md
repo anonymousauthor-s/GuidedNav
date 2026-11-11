@@ -2,16 +2,15 @@
 
 [Project](https://anonymousauthor-s.github.io/GuidedNav/) · [Inference](#inference) · [Evaluation](#habitat-evaluation) · [Training](TRAINING.md) · [Data](DATA.md) · [Model](MODELS.md)
 
-Download the final paper model for inference and benchmark evaluation, or
-train your own model with the three-stage recipe. Training starts from official
-Qwen3-VL-8B-Instruct and uses your own outputs at each stage.
+We release the **GuidedNav-8B checkpoint**, training code and evaluation code.
+Training starts from Qwen3-VL-8B-Instruct and follows three stages.
 
 ## Model and directory layout
 
 ```text
 GuidedNav/
 ├── code/                         # training, inference, evaluation and tools
-├── weights/                      # downloaded final paper model only
+├── weights/                      # GuidedNav-8B checkpoint
 │   ├── navigation-base/          # required backbone component
 │   └── stage3-epoch1/             # matching final adapter and temporal state
 ├── runs/                         # your locally trained outputs
@@ -25,8 +24,8 @@ GuidedNav/
 └── assets/vggt/vggt.pt           # training-only teacher
 ```
 
-The downloaded backbone and final adapter together are **one evaluation model**,
-approximately 16.60 GiB in BF16. Intermediate training models are not released.
+GuidedNav-8B is approximately 16.60 GiB in BF16. The inference loader uses
+the backbone, adapter and temporal state together.
 All commands below run from `code/`; see [environments](ENVIRONMENT.md).
 
 ## Inference
@@ -79,7 +78,7 @@ The JSON output contains up to four actions:
 | `2` | Turn left 15° |
 | `3` | Turn right 15° |
 
-The default frame path uses BF16 and SDPA. It loads the adapter together with its learned temporal components; loading the LoRA file alone is insufficient.
+Frame inference uses BF16 and SDPA, with the adapter and learned temporal state loaded together.
 
 ### Use a model you trained
 
@@ -107,8 +106,7 @@ stage handoff:
 | 2 | DAgger + the same visual instruction mixture | Full parameters | `scripts/train_stage2.sh` |
 | 3 | Annotated R2R/RxR experts | LoRA + guidance | `scripts/train_stage3.sh` |
 
-No training launcher requires a downloaded intermediate GuidedNav checkpoint.
-Each stage reads your preceding stage's export.
+Each stage reads the preceding stage's exported model.
 
 ## Training data
 
@@ -123,7 +121,7 @@ python tools/download_assets.py --group data
 The add-on covers 157,465 R2R and 472,323 English RxR rows, with aligned masks,
 collected poses/actions and prompt choices. Its correspondence to official text
 has been checked across all 629,788 rows. Earlier-stage corpora are prepared
-separately and are not included in this annotation download.
+using the collection and preparation steps in the data guide.
 
 ## Habitat evaluation
 
@@ -150,6 +148,6 @@ bash scripts/evaluate.sh r2r
 
 Replace `r2r` with `rxr` for RxR evaluation. A one-episode diagnostic is available by appending `--max_episodes 1`.
 
-## Release validation
+## References
 
-The recorded checks include CPU imports, argument parsing, configuration composition, and sample decoding/collation. Full GPU retraining, complete benchmark evaluation, and full-dataset RGB rendering have not been rerun during packaging. See [VALIDATION.json](VALIDATION.json) for the exact checks and limits, [ENVIRONMENT.md](ENVIRONMENT.md) for runtime versions, and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for retained upstream notices.
+[Environment setup](ENVIRONMENT.md) · [Validation record](VALIDATION.json) · [Third-party notices](THIRD_PARTY_NOTICES.md)
